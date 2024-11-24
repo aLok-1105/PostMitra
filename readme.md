@@ -21,9 +21,11 @@ git commit -m "meaningful message"
 git push
 
 ```
-### 6. Go to your Github Repo you will see pop-up from github of Create Pull request (PR)
+### 6. Publish Branch in the Sidebar of VS Code. (OR) Click on the "branch Name" on the bottom
 
-### 7. Click on "Create Pull Request" describe the changes in short
+### 7. Go to your Github Repo you will see pop-up from github of Create Pull request (PR)
 
-### 8. Collaborators will merge the code in the main repo
+### 8. Click on "Create Pull Request" describe the changes in short
+
+### 9. Collaborators will merge the code in the main repo
 
