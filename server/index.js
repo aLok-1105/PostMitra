@@ -1,26 +1,20 @@
+require('dotenv').config();
 const express = require('express');
-const dotenv = require('dotenv');
-const moongoose = require('mongoose');
+const connectDB = require('./config/db');
+const authRoutes = require('./routes/authRoutes'); // Import the auth routes
+
 const app = express();
 
-app.use(express.urlencoded({extended: false}));
-app.use(express.json())
+// Middleware
+app.use(express.json());  // For parsing JSON request bodies
 
-dotenv.config({ path: './config.env' });
+// Connect to the database
+connectDB();
 
-moongoose.connect(process.env.MONGO_URL, {
-}).then(()=>{
-    console.log('connected to DB');
-}).catch((err)=>{
-    console.log(err);
-})
+// Use the authentication routes
+app.use('/auth', authRoutes);  // All routes in authRoutes.js will be prefixed with /auth
 
-
-
-
-app.get('/', (req, res)=>{
-    res.send('Hello from Server');
-})
-
-const port = process.env.PORT || 8000;
-app.listen(port, () => console.log(`Server running on port ${port}`));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
