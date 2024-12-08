@@ -8,9 +8,11 @@ const Clerk = () => {
   const now = new Date();
   const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   const formattedDate = offsetDate.toISOString().slice(0, 10); // Corrected for local time
+  const [parcelId, setparcelId] = useState('');
 
   //initializing parcel details
   const initializer={
+    parcelId: parcelId,
     date:formattedDate,
     weight:"",
     cost:"",
@@ -69,9 +71,27 @@ const Clerk = () => {
   
 
   //submitting the final parcel details Data
+
+  const calculatePostCost = (e) =>{
+    e.preventDefault();
+    
+    const weight = parcelData.weight;
+    var parcelId = parcelData.senderDetails.pincode.slice(0, 3) + Math.random().toString(36).slice(2, 8) + parcelData.receiverDetails.pincode.slice(0, 3);
+    
+    setparcelId(parcelId)
+    setParcelData((prevData) => ({
+      ...prevData,
+      cost: weight.toString()
+    }));
+    
+    // console.log(weight);
+    // console.log(parcelData);
+    // console.log(parcelId);
+    
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault();
-
     // Validation
     if(!isValid)
      {
@@ -79,8 +99,8 @@ const Clerk = () => {
      return;
     }
      console.log(parcelData);
-
      setParcelData(initializer)
+     alert(`Your Tracking Id is: ${parcelId}`)
   }
 
   return (
@@ -131,16 +151,7 @@ const Clerk = () => {
              className="border p-1 rounded border-gray-300"
               />
             </div>
-            <div>
-             <label htmlFor="">Cost (Rs.) : </label>
-             <input 
-             type="text"
-             name="cost"
-             value={parcelData.cost}
-             onChange={handleInputChange}
-             className="border p-1 rounded border-gray-300"
-              />
-            </div>
+            
           </div>     
         </div>
 
@@ -276,7 +287,17 @@ const Clerk = () => {
         </div>
 
        </div>
-
+       <div className='my-5'>
+        <label htmlFor="">Cost (Rs.) : </label>
+        <input 
+        type="text"
+        name="cost"
+        value={parcelData.cost}
+        onChange={handleInputChange}
+        className="border p-1 rounded border-gray-300"
+        />
+      <button className='bg-blue-200 mx-5 p-2'  onClick={calculatePostCost}>Calculate Cost</button>
+      </div>
        <button className={`${isValid ? "bg-blue-500 text-white hover:bg-blue-600 hover:text-white transition-all duration-300": ""} my-6 text-2xl text-gray-800 font-semibold border stroke-slate-400 shadow-lg py-1 px-3 rounded-md 
       `} type='submit' disabled={!isValid} >Submit</button>
     </form>
