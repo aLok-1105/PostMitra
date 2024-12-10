@@ -1,6 +1,9 @@
 
 //Interface for the parcel collector entering parcel details
 import React,{useEffect,useState} from 'react'
+import { BsFillPatchCheckFill } from "react-icons/bs";
+import { RxCross2 } from "react-icons/rx";
+import Barcode from "react-barcode";
 
 const Clerk = () => {
 
@@ -9,6 +12,7 @@ const Clerk = () => {
   const offsetDate = new Date(now.getTime() - now.getTimezoneOffset() * 60000);
   const formattedDate = offsetDate.toISOString().slice(0, 10); // Corrected for local time
   const [parcelId, setparcelId] = useState('');
+  const [isSubmitted,setIsSubmitted] = useState(false);
 
   //initializing parcel details
   const initializer={
@@ -16,7 +20,7 @@ const Clerk = () => {
     date:formattedDate,
     weight:"",
     cost:"",
-    postType:"",
+    postType:"normal",
     senderDetails:{
       name:"",
       address:"",
@@ -78,7 +82,7 @@ const Clerk = () => {
     const weight = parcelData.weight;
     var parcelId = parcelData.senderDetails.pincode.slice(0, 3) + Math.random().toString(36).slice(2, 8) + parcelData.receiverDetails.pincode.slice(0, 3);
     
-    setparcelId(parcelId)
+    setparcelId(parcelId.toUpperCase())
     setParcelData((prevData) => ({
       ...prevData,
       cost: weight.toString()
@@ -99,12 +103,12 @@ const Clerk = () => {
      return;
     }
      console.log(parcelData);
+     setIsSubmitted(true);
      setParcelData(initializer)
-     alert(`Your Tracking Id is: ${parcelId}`)
+     //alert(`Your Tracking Id is: ${parcelId}`)
   }
 
   return (
-    <>
     <div className='fixed inset-0 z-50 flex justify-center items-center bg-gray-300'>
     <form onSubmit={handleSubmit} className='bg-white p-6 rounded-lg shadow-lg w-3/4 relative'>
        <h2 className='text-center font-bold text-3xl mb-3'>Parcel Details</h2>
@@ -296,14 +300,44 @@ const Clerk = () => {
         onChange={handleInputChange}
         className="border p-1 rounded border-gray-300"
         />
-      <button className='bg-blue-200 mx-5 p-2'  onClick={calculatePostCost}>Calculate Cost</button>
+      <button className='bg-blue-200 mx-5 p-2 rounded-md'  onClick={calculatePostCost}>Calculate Cost</button>
       </div>
        <button className={`${isValid ? "bg-blue-500 text-white hover:bg-blue-600 hover:text-white transition-all duration-300": ""} my-6 text-2xl text-gray-800 font-semibold border stroke-slate-400 shadow-lg py-1 px-3 rounded-md 
       `} type='submit' disabled={!isValid} >Submit</button>
     </form>
+
+
+    {/*Parcel Confirmation Pop-Up */}
+    {isSubmitted && (
+      <div className="fixed inset-0 bg-gray-700 bg-opacity-50 flex justify-center items-center z-50">
+        <div className="bg-white p-8 rounded-lg shadow-lg w-1/4 relative flex flex-col justify-center items-center">
+           
+           <RxCross2 
+           className='absolute text-gray-500 text-2xl rounded-sm font-bold right-2 top-2 cursor-pointer hover:text-white hover:bg-red-400 p-1 transition-all duration-400'
+           onClick={() => setIsSubmitted(false)}
+           />
+           <BsFillPatchCheckFill className='w-14 h-14 text-blue-400 animate-scale-pulse'/> 
+           <div className='flex flex-col gap-y-1 mt-4'>
+            <h2 className='font-semibold text-xl'>Details Submitted Successfully</h2>
+            <div className='text-lg'>Consignment ID : <span className='font-mono'>{parcelId}</span></div>
+      
+            {/* <Barcode
+             value={parcelId}
+             format="CODE128"
+             width={2}
+             height={80}
+             displayValue={false}
+             textAlign="center"
+             fontSize={16}
+             className="w-[320px]"
+            /> */}
+           </div>
+        </div>
+      </div>
+    )}
       
     </div>
-    </>
+
   )
 }
 
