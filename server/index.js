@@ -5,6 +5,7 @@
   const parcelRoutes = require('./routes/parcelRoutes'); 
   const cookieParser = require('cookie-parser');
   const cors = require('cors');
+  const mongoose = require('mongoose');
 
   const app = express();
   app.use(express.urlencoded({extended: true}));
@@ -143,17 +144,17 @@ if (!existingAdjacency) {
   await Adjacency.create({ matrix });
   console.log('Adjacency matrix initialized.');
 }
-else{
-    for (let i = 0; i < cities.length; i++) {
-      for (let j = 0; j < cities.length; j++) {
-        if (i !== j) {
-            updateTravelTime(cities[i], cities[j]);
-        }
-      }
-    }
-    console.log("Done!!");
+// else{
+//     for (let i = 0; i < cities.length; i++) {
+//       for (let j = 0; j < cities.length; j++) {
+//         if (i !== j) {
+//             updateTravelTime(cities[i], cities[j]);
+//         }
+//       }
+//     }
+//     console.log("Done!!");
     
-}
+// }
 }
 
 
