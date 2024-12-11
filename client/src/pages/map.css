@@ -94,3 +94,7 @@ label {
 input[type="text"]:focus {
   border-color: #007bff;
 }
+.table-container {
+  margin:20px;
+  /* width: 100%; */
+}
