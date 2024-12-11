@@ -27,7 +27,7 @@ module.exports = {
         },
         moveHorizontal: {
           '0%': { transform: 'translateX(0)', }, // Start off-screen
-          '100%': { transform: 'translateX(145%)', }, // End at original position
+          '100%': { transform: 'translateX(170%)', }, // End at original position
         },
       },
     },
