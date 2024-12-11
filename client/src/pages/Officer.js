@@ -171,7 +171,7 @@ const Officer = () => {
           </TableContainer>
         )}
       </Box>
-      {shortestPaths.length > 0 && (
+      {/* {shortestPaths.length > 0 && (
         <div>
           <h3>Top Shortest Paths:</h3>
           <ul>
@@ -182,10 +182,9 @@ const Officer = () => {
             ))}
           </ul>
         </div>
-      )}
+      )} */}
       {parcels.map((parcel, index) => (
       <div key={index}>
-        {/* Render the properties of each parcel here */}
         <h3>Parcel {index + 1}</h3>
         <p>{parcel.name}</p> 
         <p>{parcel.weight} kg</p> 
