@@ -46,6 +46,7 @@ export function Home({ username }) {
   //   setParcels(initialParcels);
   // }, []);
 
+
   const handleSend = async(source, destination) => {
     navigate('/map', { state: { source, destination } });
     // try{
@@ -118,6 +119,17 @@ export function Home({ username }) {
 
   // Handle actions (e.g., "Received" or "Send")
   const handleAction = (action, parcel) => {
+    // const updatedParcel = { ...parcel, action, currentNode: username };
+
+    // // Send message to the server
+    // sendJsonMessage(updatedParcel);
+
+    // // Remove the parcel from the current list
+    // setParcels((prev) => prev.filter((p) => p.parcelId !== parcel.parcelId));
+    // handleSend(updatedParcel.source, updatedParcel.destination);
+  };
+
+  const handleCheck = (action, parcel) => {
     const updatedParcel = { ...parcel, action, currentNode: username };
 
     // Send message to the server
@@ -125,7 +137,7 @@ export function Home({ username }) {
 
     // Remove the parcel from the current list
     setParcels((prev) => prev.filter((p) => p.parcelId !== parcel.parcelId));
-    handleSend(updatedParcel.path[0], updatedParcel.path[updatedParcel.path.length - 1]);
+    handleSend(updatedParcel.source, updatedParcel.destination);
   };
 
   // const handleAction = async (action, parcel) => {
@@ -154,10 +166,18 @@ export function Home({ username }) {
   const handleTrack = (parcelId) => {
     navigate(`/tracking`, { state: { parcelId } }); // Pass the parcelId to the tracking page
   };
+  const handleSendAll = () => {
+    
+  };
+  const handleAlert = () => {
+    
+  };
 
   return (
     <div>
       <h1>{username} - Dashboard</h1>
+      <Button onClick={() => handleSendAll()}>Send All</Button>
+      <Button onClick={() => handleAlert()}>Calamitiy Alert</Button>
       <Tabs value={tabValue} onChange={handleTabChange} aria-label="parcel tabs">
         <Tab label="Incoming Parcels" />
         <Tab label="Outgoing Parcels" />
@@ -168,16 +188,30 @@ export function Home({ username }) {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Parcel ID</TableCell>
-              <TableCell>Path</TableCell>
+              <TableCell>Bag ID</TableCell>
+              <TableCell>Source</TableCell>
+              <TableCell>Destination</TableCell>
+              <TableCell>Optimal Path</TableCell>
+              <TableCell>Weight</TableCell>
+              <TableCell>No. of Bags</TableCell>
+              <TableCell>Alternate Path</TableCell>
               <TableCell>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredParcels.map((parcel) => (
               <TableRow key={parcel.parcelId}>
-                <TableCell>{parcel.parcelId}</TableCell>
+                <TableCell>{parcel.bagId}</TableCell>
+                <TableCell>{parcel.source}</TableCell>
+                <TableCell>{parcel.destination}</TableCell>
                 <TableCell>{parcel.path.join(" -> ")}</TableCell>
+                <TableCell>{parcel.weight}</TableCell>
+                <TableCell>{parcel.noOfBags}</TableCell>
+                <TableCell><Button
+                  onClick={() =>
+                        handleCheck("Check", parcel)
+                  
+                      }>Check</Button></TableCell>
                 <TableCell>
                   {tabValue === 0 || tabValue === 1 ? (
                     <Button
