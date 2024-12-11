@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-// import './map.css';
+import './map.css';
 
 const Map = () => {
   const markers = [
@@ -155,7 +155,7 @@ const Map = () => {
               topPaths.map((pathObj, index) => (
                 <div key={index} style={{ marginBottom: "10px" }}>
                   <strong>Path {index + 1}:</strong> {pathObj.path.join(" -> ")} <br />
-                  <strong>Distance:</strong> {pathObj.distance} km
+                  <strong>Distance:</strong> {pathObj.distance} 
                   <button
                     onClick={() => finalizePath(pathObj.path)}
                     style={{
@@ -198,7 +198,7 @@ const Map = () => {
             <Polyline
               key={index}
               positions={renderPathOnMap(pathObj.path)}
-              color={index === 0 ? "blue" : index === 1 ? "green" : "red"}
+              color={index === 0 ? "green" : index === 1 ? "blue" : "red"}
               weight={4}
               opacity={0.7}
               dashArray="10, 10"
