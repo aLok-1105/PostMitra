@@ -1,7 +1,10 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
+import { useLocation } from "react-router-dom";
+import axios from "axios";
+import './map.css';
 
 const Map = () => {
   const markers = [
@@ -18,6 +21,13 @@ const Map = () => {
     { geocode: [12.9716, 77.5946], popUp: "Bangalore" },
     { geocode: [26.1445, 91.7362], popUp: "Guwahati" },
     { geocode: [17.6869, 83.2185], popUp: "Vizag" },
+    { geocode: [23.0225, 72.5714], popUp: "Ahmedabad" },
+    { geocode: [23.1815, 75.7812], popUp: "Bhopal" },
+    { geocode: [17.3854, 78.4867], popUp: "Hyderabad" },
+    { geocode: [26.9196, 73.0334], popUp: "Jodhpur" },
+    { geocode: [22.5726, 88.3639], popUp: "Kolkata" },
+    { geocode: [15.4909, 73.8278], popUp: "Panaji" },
+    { geocode: [19.2961, 84.7915], popUp: "Visakhapatnam" },
   ];
 
   const customIcon = new Icon({
@@ -25,38 +35,52 @@ const Map = () => {
     iconSize: [25, 25],
   });
 
+  const location = useLocation();
   const [source, setSource] = useState("");
   const [destination, setDestination] = useState("");
-  const [route, setRoute] = useState([]);
+  const [topPaths, setTopPaths] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [finalizedPath, setFinalizedPath] = useState("");
 
-  const handleSourceChange = (e) => setSource(e.target.value);
-  const handleDestinationChange = (e) => setDestination(e.target.value);
+  useEffect(() => {
+    if (location.state) {
+      const { source: passedSource, destination: passedDestination } = location.state;
+      if (passedSource) setSource(passedSource);
+      if (passedDestination) setDestination(passedDestination);
+    }
+  }, [location.state]);
 
-  const handleButtonClick = () => {
-    // Logic to calculate and display the route
-    // For simplicity, you can use a basic example where the route connects the source and destination markers
-    const sourceMarker = markers.find((marker) => marker.popUp === source);
-    const destinationMarker = markers.find((marker) => marker.popUp === destination);
-
-    if (sourceMarker && destinationMarker) {
-      setRoute([sourceMarker.geocode, destinationMarker.geocode]);
+  const fetchShortestPaths = async () => {
+    if (!source || !destination) {
+      alert("Please enter both source and destination.");
+      return;
+    }
+    setLoading(true);
+    try {
+      const response = await axios.post('http://localhost:8000/api/graph/get-shortest-paths', { city1: source, city2: destination });
+      setTopPaths(response.data.topPaths);
+    } catch (error) {
+      console.error("Error fetching shortest paths:", error);
+    } finally {
+      setLoading(false);
     }
   };
 
-  const coordinates = markers.map(marker => marker.geocode);
+  const finalizePath = (path) => {
+    setFinalizedPath(path);
+    alert(`Path finalized: ${path.join(" -> ")}`);
+  };
+
+  const renderPathOnMap = (path) => {
+    return path.map((city) => {
+      const marker = markers.find((marker) => marker.popUp === city);
+      return marker ? marker.geocode : null;
+    }).filter(Boolean);
+  };
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100%" }}>
-      <div
-        style={{
-          flex: 1,
-          padding: "20px",
-          backgroundColor: "#f4f4f4",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "space-between",
-        }}
-      >
+    <div className='map-component'>
+      <div className="map-component-2">
         <div>
           <h2>Route Planner</h2>
           <div style={{ marginBottom: "15px" }}>
@@ -67,8 +91,9 @@ const Map = () => {
               type="text"
               id="source"
               value={source}
-              onChange={handleSourceChange}
+              onChange={(e) => setSource(e.target.value)}
               placeholder="Enter source location"
+              className="form-control"
               style={{
                 width: "100%",
                 padding: "8px",
@@ -85,8 +110,9 @@ const Map = () => {
               type="text"
               id="destination"
               value={destination}
-              onChange={handleDestinationChange}
+              onChange={(e) => setDestination(e.target.value)}
               placeholder="Enter destination location"
+              className="form-control"
               style={{
                 width: "100%",
                 padding: "8px",
@@ -96,17 +122,18 @@ const Map = () => {
             />
           </div>
           <button
-            onClick={handleButtonClick}
+            onClick={fetchShortestPaths}
             style={{
-              padding: "10px 15px",
-              border: "none",
-              backgroundColor: "#4CAF50",
-              color: "white",
+              width: "100%",
+              padding: "10px",
               borderRadius: "4px",
+              backgroundColor: "#007bff",
+              color: "#fff",
+              border: "none",
               cursor: "pointer",
             }}
           >
-            Show Route
+            Find Paths
           </button>
         </div>
 
@@ -122,9 +149,32 @@ const Map = () => {
               padding: "10px",
             }}
           >
-            {route.length > 0
-              ? `Route: ${route[0]} -> ${route[1]}`
-              : "No route selected."}
+            {loading ? (
+              "Loading..."
+            ) : topPaths.length > 0 ? (
+              topPaths.map((pathObj, index) => (
+                <div key={index} style={{ marginBottom: "10px" }}>
+                  <strong>Path {index + 1}:</strong> {pathObj.path.join(" -> ")} <br />
+                  <strong>Distance:</strong> {pathObj.distance} km
+                  <button
+                    onClick={() => finalizePath(pathObj.path)}
+                    style={{
+                      marginTop: "5px",
+                      padding: "5px 10px",
+                      backgroundColor: "#28a745",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Finalize Path
+                  </button>
+                </div>
+              ))
+            ) : (
+              "No paths found."
+            )}
           </div>
         </div>
       </div>
@@ -138,24 +188,22 @@ const Map = () => {
           <TileLayer
             url='https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png'
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            minZoom={0}
-            maxZoom={20}
-            ext="png"
           />
           {markers.map((marker, index) => (
             <Marker key={index} position={marker.geocode} icon={customIcon}>
               <Popup>{marker.popUp}</Popup>
             </Marker>
           ))}
-          {route.length === 2 && (
+          {topPaths.map((pathObj, index) => (
             <Polyline
-              positions={route}
-              color="blue"
+              key={index}
+              positions={renderPathOnMap(pathObj.path)}
+              color={index === 0 ? "blue" : index === 1 ? "green" : "red"}
               weight={4}
               opacity={0.7}
               dashArray="10, 10"
             />
-          )}
+          ))}
         </MapContainer>
       </div>
     </div>
