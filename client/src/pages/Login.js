@@ -18,7 +18,7 @@ const Login = () => {
         role
       }, {
         headers: { 'Content-Type': 'application/json' },
-        withCredentials: true, // This option is required to send cookies with cross-site requests
+        withCredentials: true, // This option cookies with cross-site requests
       });
 
 
