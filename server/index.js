@@ -8,6 +8,12 @@ const { WebSocketServer } = require('ws');
 const { createServer } = require('http');
 const { parse } = require('url');
 const { connect, Schema, model } = require('mongoose');
+const axios = require('axios');
+// const React = require("react");
+// const { useEffect, useState } = React;
+
+// module.exports = { React, useEffect, useState };
+
 
 // MongoDB connection setup
 const MONGODB_URI = "mongodb+srv://postmitra:posrmitra121@postmitra.rk7jk.mongodb.net/?retryWrites=true&w=majority&appName=PostMitra";
@@ -33,6 +39,11 @@ connectToDatabase();
 
 const parcelSchema = new Schema({
   parcelId: { type: String, required: true },
+  trackId: { type: String },
+  source: { type: String, required: true },
+  destination: { type: String, required: true },
+  weight: { type: Number, required: true },
+  noOfBags: { type: Number, required: true },
   path: { type: [String], required: true },
   type: { type: String, enum: ["incoming", "outgoing", "previous", "delivered"], required: true },
   currentNode: { type: String },
@@ -50,13 +61,12 @@ const Track = model("Track", trackingSchema);
 
 const parcelsData = [
   
-    { parcelId: "P001", path: ["Nagpur", "Delhi", "Patna"], type: "incoming", currentNode: "Nagpur" },
-    { parcelId: "P002", path: ["Patna", "Nagpur", "Delhi"], type: "incoming", currentNode: "Patna" },
-    { parcelId: "P003", path: ["Delhi", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
-    { parcelId: "P004", path: ["Delhi", "Patna", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
-    { parcelId: "P005", path: ["Nagpur", "Patna", "Delhi"], type: "incoming", currentNode: "Nagpur" },
-    { parcelId: "P006", path: ["Nagpur", "Delhi"], type: "outgoing", currentNode: "Nagpur" },
-    { parcelId: "P007", path: ["Patna", "Nagpur"], type: "outgoing", currentNode: "Patna" },
+    { parcelId: "P001", trackId: "", source: "Delhi", destination: "Nagpur", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Delhi" },
+    { parcelId: "P002", trackId: "", source: "Delhi", destination: "Patna", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Delhi" },
+    { parcelId: "P003", trackId: "", source: "Nagpur", destination: "Mumbai", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Nagpur" },
+    { parcelId: "P003", trackId: "", source: "Mumbai", destination: "Nagpur", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Mumbai" },
+    { parcelId: "P004", trackId: "", source: "Patna", destination: "Nagpur", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Patna" },
+    { parcelId: "P005", trackId: "", source: "Patna", destination: "Mumbai", weight: 50, noOfBags: 10,  path: [], type: "outgoing", currentNode: "Patna" },
   
 ];
 
@@ -74,6 +84,7 @@ insertMultipleParcels(parcelsData)
   .catch(err => {
     console.error("Failed to save parcels:", err);
   });
+
 
 wsServer.on('connection', async (connection, request) => {
   const { username } = parse(request.url, true).query;
@@ -411,26 +422,50 @@ async function updateParcelInDatabase(query, update) {
 }
 
 
+// async function insertMultipleParcels(parcelDataArray) {
+//   try {
+//     // Create multiple parcel documents based on the input array of parcel data
+//     const parcels = parcelDataArray.map(data => new Parcel(data));
+    
+//     // Save all parcels to the database
+//     const savedParcels = await Parcel.insertMany(parcels);
+    
+//     console.log("Parcels saved successfully:", savedParcels);
+//     return savedParcels;  // Return the array of saved parcels
+//   } catch (err) {
+//     console.error("Error saving parcels:", err);
+//     throw err;  // Rethrow the error to handle it outside the function
+//   }
+// }
 async function insertMultipleParcels(parcelDataArray) {
   try {
-    // Create multiple parcel documents based on the input array of parcel data
-    const parcels = parcelDataArray.map(data => new Parcel(data));
-    
-    // Save all parcels to the database
-    const savedParcels = await Parcel.insertMany(parcels);
-    
+    // Use Promise.all to insert all parcels in parallel
+    const savedParcels = await Promise.all(
+      parcelDataArray.map(data => insertSingleParcel(data))
+    );
+
     console.log("Parcels saved successfully:", savedParcels);
-    return savedParcels;  // Return the array of saved parcels
+    return savedParcels; // Return the array of saved parcels
   } catch (err) {
     console.error("Error saving parcels:", err);
-    throw err;  // Rethrow the error to handle it outside the function
+    throw err; // Rethrow the error to handle it outside the function
   }
 }
+
 
 async function insertSingleParcel(parcelData) {
   try {
     // Create a new parcel document based on the input parcel data
-    const newParcel = new Parcel(parcelData);
+    newParcel = new Parcel(parcelData);
+    topPaths =[];
+    try {
+      const response = await axios.post('http://localhost:8000/api/graph/get-shortest-paths', { city1: newParcel.source, city2: newParcel.destination });
+      topPaths = response.data.topPaths;
+    } catch (error) {
+      console.error("Error fetching shortest paths:", error);
+    }
+    newParcel.path = topPaths[0];
+    newParcel.trackId = newParcel.parcelId
     
     // Save the new parcel document to the database
     const savedParcel = await newParcel.save();
