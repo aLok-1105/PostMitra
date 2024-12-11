@@ -184,96 +184,96 @@ function calculateTime(city1, city2){
   return 1;
 }
 
-async function updateTravelTime(city1, city2) {
-    try {
-        const time = calculateTime(city1, city2)
-      if (!city1 || !city2 || !time) {
-        throw new Error('City1, City2, and time are required.');
-      }
+// async function updateTravelTime(city1, city2) {
+//     try {
+//         const time = calculateTime(city1, city2)
+//       if (!city1 || !city2 || !time) {
+//         throw new Error('City1, City2, and time are required.');
+//       }
   
-      const index1 = cities.indexOf(city1);
-      const index2 = cities.indexOf(city2);      
+//       const index1 = cities.indexOf(city1);
+//       const index2 = cities.indexOf(city2);      
 
-      if (index1 === -1 || index2 === -1) {
-        throw new Error('One or both cities not found.');
-      }
+//       if (index1 === -1 || index2 === -1) {
+//         throw new Error('One or both cities not found.');
+//       }
   
-      // Fetch the adjacency matrix
-      const adjacencyData = await Adjacency.findOne();
-      if (!adjacencyData) throw new Error('Adjacency matrix not found.');
+//       // Fetch the adjacency matrix
+//       const adjacencyData = await Adjacency.findOne();
+//       if (!adjacencyData) throw new Error('Adjacency matrix not found.');
   
-      const matrix = adjacencyData.matrix;
+//       const matrix = adjacencyData.matrix;
   
-      // Update the travel time in the matrix
-      matrix[index1][index2] = time;
-      matrix[index2][index1] = time;
+//       // Update the travel time in the matrix
+//       matrix[index1][index2] = time;
+//       matrix[index2][index1] = time;
   
-      // Recalculate all-pairs shortest paths
-      const { dist, nextNode } = floydWarshall(matrix);
+//       // Recalculate all-pairs shortest paths
+//       const { dist, nextNode } = floydWarshall(matrix);
   
-      // Update the database with the new matrix using `findOneAndUpdate`
-      const updatedData = await Adjacency.findOneAndUpdate(
-        { _id: adjacencyData._id }, // Filter by document ID
-        { matrix: dist },           // Update with new matrix
-        { new: true, useFindAndModify: false } // Return updated document
-      );
+//       // Update the database with the new matrix using `findOneAndUpdate`
+//       const updatedData = await Adjacency.findOneAndUpdate(
+//         { _id: adjacencyData._id }, // Filter by document ID
+//         { matrix: dist },           // Update with new matrix
+//         { new: true, useFindAndModify: false } // Return updated document
+//       );
 
-    //   console.log(updatedData);
-    // adjacencyData.matrix = dist;
-    await adjacencyData.save(); 
+//     //   console.log(updatedData);
+//     // adjacencyData.matrix = dist;
+//     await adjacencyData.save(); 
       
-      if (!updatedData) {
-        throw new Error('Failed to update the adjacency matrix.');
-      }
+//       if (!updatedData) {
+//         throw new Error('Failed to update the adjacency matrix.');
+//       }
   
-      return {
-        message: 'Travel time updated and matrix recalculated.',
-        updatedMatrix: updatedData.matrix,
-        nextNode,
-      };
-    } catch (error) {
-      console.error(error);
-      throw new Error(`Error while updating travel time: ${error.message}`);
-    }
-  }
+//       return {
+//         message: 'Travel time updated and matrix recalculated.',
+//         updatedMatrix: updatedData.matrix,
+//         nextNode,
+//       };
+//     } catch (error) {
+//       console.error(error);
+//       throw new Error(`Error while updating travel time: ${error.message}`);
+//     }
+//   }
 // Endpoint to update travel time and recalculate the matrix
-app.put('/api/graph/update-travel-time', async (req, res) => {
-  try {
-    const { city1, city2, time } = req.body;
+// app.put('/api/graph/update-travel-time', async (req, res) => {
+//   try {
+//     const { city1, city2, time } = req.body;
 
-    if (!city1 || !city2 || !time) {
-      return res.status(400).json({ error: 'City1, City2, and time are required.' });
-    }
+//     if (!city1 || !city2 || !time) {
+//       return res.status(400).json({ error: 'City1, City2, and time are required.' });
+//     }
 
-    const index1 = cities.indexOf(city1);
-    const index2 = cities.indexOf(city2);
+//     const index1 = cities.indexOf(city1);
+//     const index2 = cities.indexOf(city2);
 
-    if (index1 === -1 || index2 === -1) {
-      return res.status(404).json({ error: 'One or both cities not found.' });
-    }
+//     if (index1 === -1 || index2 === -1) {
+//       return res.status(404).json({ error: 'One or both cities not found.' });
+//     }
 
-    const adjacencyData = await Adjacency.findOne();
-    if (!adjacencyData) return res.status(500).json({ error: 'Adjacency matrix not found.' });
+//     const adjacencyData = await Adjacency.findOne();
+//     if (!adjacencyData) return res.status(500).json({ error: 'Adjacency matrix not found.' });
 
-    const matrix = adjacencyData.matrix;
+//     const matrix = adjacencyData.matrix;
 
-    // Update the direct travel time
-    matrix[index1][index2] = time;
-    matrix[index2][index1] = time;
+//     // Update the direct travel time
+//     matrix[index1][index2] = time;
+//     matrix[index2][index1] = time;
 
-    // Recalculate all-pairs shortest paths
-    const { dist, nextNode } = floydWarshall(matrix);
+//     // Recalculate all-pairs shortest paths
+//     const { dist, nextNode } = floydWarshall(matrix);
 
-    // Save updated matrix
-    adjacencyData.matrix = dist;
-    await adjacencyData.save();
+//     // Save updated matrix
+//     adjacencyData.matrix = dist;
+//     await adjacencyData.save();
 
-    res.status(200).json({ message: 'Travel time updated and matrix recalculated.' });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error while updating travel time.' });
-  }
-});
+//     res.status(200).json({ message: 'Travel time updated and matrix recalculated.' });
+//   } catch (error) {
+//     console.error(error);
+//     res.status(500).json({ error: 'Server error while updating travel time.' });
+//   }
+// });
 
 // Endpoint to get top 3 shortest paths
 app.post('/api/graph/get-shortest-paths', async (req, res) => {

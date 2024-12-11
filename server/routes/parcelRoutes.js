@@ -47,16 +47,16 @@ router.post('/registerParcel', async (req, res) => {
     });
 
 
-    const senderPhone = "+918840110024";
-    const message = `Parcel with ID: ${parcelData.parcelId} has been registered successfully.`;
+    // const senderPhone = "+918840110024";
+    // const message = `Parcel with ID: ${parcelData.parcelId} has been registered successfully.`;
 
-    const response = await twilioClient.messages.create({
-      body: message,
-      from: twilioPhoneNumber,
-      to: senderPhone,
-    });
+    // const response = await twilioClient.messages.create({
+    //   body: message,
+    //   from: twilioPhoneNumber,
+    //   to: senderPhone,
+    // });
     
-    console.log('Twilio response:', response.sid);
+    // console.log('Twilio response:', response.sid);
 
 
   } catch (err) {
