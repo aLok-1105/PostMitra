@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-import './map.css';
+// import './map.css';
 
 const Map = () => {
   const markers = [
