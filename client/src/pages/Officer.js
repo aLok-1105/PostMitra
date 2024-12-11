@@ -5,7 +5,7 @@ import {
 } from '@mui/material';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-
+import './map.css';
 // Data generation function
 const createData = (srNo, source, destination, weight, parcels, status) => {
   return { srNo, source, destination, weight, parcels, status };
@@ -82,18 +82,44 @@ const Officer = () => {
 
   // Render tables based on the selected tab (state)
   const renderTable = (rows) => (
-    <Table className="table-container" aria-label="parcel data table">
-  <TableHead>
-    <TableRow>
-      <TableCell style={{ borderRight: '1px solid #ddd' }}>Sr No</TableCell>
-      <TableCell style={{ borderRight: '1px solid #ddd' }}>Source (City)</TableCell>
-      <TableCell style={{ borderRight: '1px solid #ddd' }}>Destination (City)</TableCell>
-      <TableCell style={{ borderRight: '1px solid #ddd' }} align="right">Total Weight</TableCell>
-      <TableCell style={{ borderRight: '1px solid #ddd' }} align="right">Total Number of Parcels</TableCell>
-      <TableCell style={{ borderRight: '1px solid #ddd' }} align="center">Status</TableCell>
-      <TableCell align="center">Action</TableCell>
-    </TableRow>
-  </TableHead>
+    <div style={{ width: '100%', overflowX: 'hidden', padding: '16px' }}>
+    <Table className="table-container">
+<TableHead>
+  <TableRow style={{ backgroundColor: '#ffe5e5', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+    <TableCell 
+      style={{
+        borderRight: '1px solid #ddd', 
+        borderTopLeftRadius: '8px', 
+        fontWeight: 'bold'
+      }}
+    >
+      Sr No
+    </TableCell>
+    <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Source (City)</TableCell>
+    <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Destination (City)</TableCell>
+    <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }} align="right">Total Weight</TableCell>
+    <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }} align="right">Total Number of Parcels</TableCell>
+    <TableCell 
+      style={{
+        borderRight: '1px solid #ddd', 
+        fontWeight: 'bold', 
+        textAlign: 'center'
+      }}
+    >
+      Status
+    </TableCell>
+    <TableCell 
+      style={{
+        borderTopRightRadius: '8px', 
+        fontWeight: 'bold', 
+        textAlign: 'center'
+      }}
+    >
+      Action
+    </TableCell>
+  </TableRow>
+</TableHead>
+
   <TableBody>
     {rows.map((row) => (
       <TableRow key={row.srNo}>
@@ -117,7 +143,9 @@ const Officer = () => {
       </TableRow>
     ))}
   </TableBody>
-</Table>
+    </Table>
+    </div>
+
 
   );
 
