@@ -11,9 +11,16 @@ router.post('/register', async (req, res) => {
   try {
     const { email, password, role } = req.body;
 
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return res.status(400).send('Error: Email already in use');
+    }
+
     if (!['Operator', 'Officer'].includes(role)) {
       return res.status(400).send('Invalid role. Allowed roles: Operator, Officer');
     }
+
+    // console.log(req.body);
 
     const newUser = new User({ email, password, role });
     await newUser.save();
@@ -26,13 +33,14 @@ router.post('/register', async (req, res) => {
 // Login route
 router.post('/login', async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
     
     const user = await User.findOne({ email });
+    
     if (!user) return res.status(404).send('User not found');
 
     const isValid = await user.comparePassword(password);
-    if (!isValid) return res.status(401).send('Invalid credentials');
+    if (!isValid || user.role !== role) return res.status(401).send('Invalid credentials');
 
     const token = jwt.sign(
       { id: user._id, email: user.email, role: user.role },

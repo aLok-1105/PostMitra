@@ -44,18 +44,38 @@ router.post('/registerParcel', async (req, res) => {
 router.get('/showParcels', authenticate, async (req, res) => {
   try {
     const { email } = req.user;
-    const pincode = String(email).slice(3, 6);
-    const city = cityMappings[pincode];
-    console.log(city);
+    const pincode = String(email).slice(3, 6); // Extract the starting pincode
     
-    // console.log(req.user.email);    
-    // console.log(pincode);
+    // Use MongoDB's aggregation to group parcels by source and destination pincodes
+    const parcels = await IndividualParcelDetail.aggregate([
+      {
+        $match: { 'senderDetails.pincode': new RegExp(`^${pincode}`) } // Match source pincodes starting with `pincode`
+      },
+      {
+        $group: {
+          _id: { 
+            src: '$senderDetails.pincode', 
+            dest: '$receiverDetails.pincode' 
+          },
+          count: { $sum: 1 } // Count parcels in each group
+        }
+      },
+      {
+        $project: {
+          _id: 0,
+          src: '$_id.src',
+          dest: '$_id.dest',
+          count: 1
+        }
+      }
+    ]);
     
-    const parcels = await IndividualParcelDetail.find({ 'senderDetails.address': city });
-    console.log(parcels);
+    console.log(`Parcel counts for pincode ${pincode}:`, parcels);
     
-    // Add the logic to handle showing parcels here
-    res.status(200).json({ message: 'Parcels data fetched successfully' });
+    res.status(200).json({
+      message: 'Parcels data fetched successfully',
+      parcels
+    });
   } catch (error) {
     console.error("Error fetching parcels:", error);
     res.status(500).json({ message: 'Error fetching parcels' });

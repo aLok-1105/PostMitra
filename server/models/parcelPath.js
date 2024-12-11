@@ -46,7 +46,7 @@ const cities = [
   const Adjacency = mongoose.model('Adjacency', AdjacencySchema);
   
   // Helper function to initialize sample data
-  async function initializeData() {
+  async function initializeData() {lllll
     const existingNodes = await Node.find();
     const existingAdjacency = await Adjacency.findOne();
   
