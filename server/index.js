@@ -5,15 +5,25 @@ require('dotenv').config();
 const connectDB = require('./config/db');
 const authRoutes = require('./routes/authRoutes'); 
 const parcelRoutes = require('./routes/parcelRoutes'); 
+const cookieParser = require('cookie-parser');
+const axios = require('axios');
+const cors = require('cors');
+
 connectDB();
 
 const app = express();
+app.use(express.urlencoded({extended: true}));
+
 app.use(express.json());
+  app.use(cookieParser());
+  app.use(cors({
+    origin: 'http://localhost:3000',
+    methods: 'GET,POST,PUT,DELETE',
+    allowedHeaders: 'Content-Type,Authorization',
+    credentials: true // Required for cookies
+  }));
 
-const cors = require('cors');
-app.use(cors());
 
-const axios = require('axios');
 
 app.use('/auth', authRoutes);  // All routes in authRoutes.js will be prefixed with /auth
 app.use('/parcel', parcelRoutes);
