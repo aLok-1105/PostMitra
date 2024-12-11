@@ -1,29 +1,29 @@
-const express = require('express');
-const mongoose = require('mongoose');
+  require('dotenv').config();
+  const express = require('express');
+  const connectDB = require('./config/db');
+  const authRoutes = require('./routes/authRoutes'); 
+  const parcelRoutes = require('./routes/parcelRoutes'); 
+  const cookieParser = require('cookie-parser');
+  const cors = require('cors');
+  const mongoose = require('mongoose');
 
-require('dotenv').config();
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes'); 
-const parcelRoutes = require('./routes/parcelRoutes'); 
-const cookieParser = require('cookie-parser');
-const axios = require('axios');
-const cors = require('cors');
-
-connectDB();
-
-const app = express();
-app.use(express.urlencoded({extended: true}));
-
-app.use(express.json());
+  const app = express();
+  app.use(express.urlencoded({extended: true}));
+  app.use(express.json());
   app.use(cookieParser());
   app.use(cors({
-    origin: 'http://localhost:3000',
+    origin: 'http://172.16.58.87:3000',
     methods: 'GET,POST,PUT,DELETE',
     allowedHeaders: 'Content-Type,Authorization',
     credentials: true // Required for cookies
   }));
 
+  // Connect to the database
+  connectDB();
 
+  // Use the authentication routes
+  app.use('/auth', authRoutes);  // All routes in authRoutes.js will be prefixed with /auth
+  app.use('/parcel', parcelRoutes);
 
 app.use('/auth', authRoutes);  // All routes in authRoutes.js will be prefixed with /auth
 app.use('/parcel', parcelRoutes);

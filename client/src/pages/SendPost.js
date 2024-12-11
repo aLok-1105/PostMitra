@@ -3,7 +3,7 @@
 import axios from 'axios';
 import React,{useEffect,useState} from 'react'
 
-const Clerk = () => {
+const SendPost = () => {
 
   //Updating date
   const now = new Date();
@@ -267,4 +267,4 @@ const Clerk = () => {
   )
 }
 
-export default Clerk
+export default SendPost
