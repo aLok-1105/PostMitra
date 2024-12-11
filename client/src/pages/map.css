@@ -58,6 +58,7 @@ input {
 
 input:focus {
   border-color: #007bff;
+<<<<<<< HEAD
   outline: none;
   background-color: #ffffff;
 }
@@ -142,3 +143,10 @@ button:hover {
     height: 50vh;
   }
 }
+=======
+}
+.table-container {
+  margin:20px;
+  /* width: 100%; */
+}
+>>>>>>> 7057853416a0f3c28be51de4bffb567321c9aef8

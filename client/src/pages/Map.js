@@ -161,31 +161,34 @@ const Map = () => {
             }}
           >
             {loading ? (
-              "Loading..."
-            ) : topPaths.length > 0 ? (
-              topPaths.map((pathObj, index) => (
-                <div key={index} style={{ marginBottom: "10px" }}>
-                  <strong>Path {index + 1}:</strong> {pathObj.path.join(" -> ")} <br />
-                  <strong>Distance:</strong> {pathObj.distance} 
-                  <button
-                    onClick={() => finalizePath(pathObj.path)}
-                    style={{
-                      marginTop: "5px",
-                      padding: "5px 10px",
-                      backgroundColor: "#28a745",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: "4px",
-                      cursor: "pointer",
-                    }}
-                  >
-                    Finalize Path
-                  </button>
-                </div>
-              ))
-            ) : (
-              "No paths found."
-            )}
+  "Loading..."
+) : topPaths.length > 0 ? (
+  topPaths.map((pathObj, index) => (
+    <div key={index} style={{ marginBottom: "10px" }}>
+      <button
+        onClick={() => finalizePath(pathObj.path)}
+        style={{
+          marginTop: "5px",
+          padding: "5px 10px",
+          backgroundColor: "#28a745", // Dark green background
+          color: "#fff", // White text
+          border: "2px solid #1e7b34", // Solid dark green border
+          borderRadius: "4px",
+          cursor: "pointer",
+          textAlign: "center", // Ensures text inside button is left-aligned
+          display: "block", // Makes buttons block elements to ensure alignment
+        }}
+      >
+        {pathObj.path.join(" → ")}
+        <strong>Distance:</strong> {pathObj.distance} 
+      </button>
+      
+    </div>
+  ))
+) : (
+  "No paths found."
+)}
+
           </div>
         </div>
       </div>
