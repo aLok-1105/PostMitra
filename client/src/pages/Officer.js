@@ -14,7 +14,7 @@ const createData = (srNo, source, destination, weight, parcels, status) => {
 // Sample data for different parcel categories
 const sourceRows = [
   createData(1, 'Mumbai', 'Delhi', '500 kg', 50, true),
-  createData(2, 'Pune', 'Bangalore', '300 kg', 30, false),
+  createData(2, 'Mumbai', 'Gwalior', '300 kg', 30, false),
 ];
 
 const transitRows = [
