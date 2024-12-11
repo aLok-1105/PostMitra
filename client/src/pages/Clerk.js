@@ -291,7 +291,7 @@ const Clerk = () => {
         </div>
 
        </div>
-       <div className='my-5'>
+       <div className='my-5 flex flex-row justify-center items-center'>
         <label htmlFor="">Cost (Rs.) : </label>
         <input 
         type="text"
