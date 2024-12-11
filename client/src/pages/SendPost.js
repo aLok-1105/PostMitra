@@ -160,6 +160,8 @@ const Clerk = () => {
             >
               <option value="normal">Normal</option>
               <option value="speed">Speed Post</option>
+              <option value="speed">Medicines</option>
+              <option value="speed">Edibles - Food </option>
             </select>
             </div>
 
