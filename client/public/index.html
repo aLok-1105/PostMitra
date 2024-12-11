@@ -6,6 +6,21 @@
     <meta name="theme-color" content="#000000" />
 
     <title>PostMitra</title>
+    <style>
+      #root {
+        background-image: url('/assets/bg.jpg'); /* Path to image in the public folder */
+        animation: move 60s infinite linear;
+        height: 100vh; /* Ensure it covers the full viewport */
+        background-repeat: no-repeat; /* Prevent tiling */
+        background-position: center; /* Center the image */
+      }
+
+      /* Add your keyframes for the move animation */
+      @keyframes move {
+        0% { background-position: center top; }
+        100% { background-position: center bottom; }
+      }
+    </style>
   </head>
   <body>
     <div id="root"></div>
