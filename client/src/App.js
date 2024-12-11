@@ -12,9 +12,11 @@ function App() {
       {/* Define routes for different pages*/}
       
       <Routes>
-      <Route path="/sendpost" element={<SendPost />} />
-      <Route path="/login" element={<Login/>} />
-      <Route path="/map" element={<Map />} />
+        <Route path='/sendpost' element={<SendPost/>}/>
+        <Route path='/login' element={<Login/>}/>
+        <Route path='/map' element={<Map/>}/>
+        <Route path='/officer' element={<Officer/>}/>
+        <Route path='/' element={<Login/>}/>
       </Routes>
 
     </div>
