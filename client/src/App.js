@@ -15,7 +15,7 @@ function App() {
       {/* Define routes for different pages*/}
       
       <Routes>
-      <Route path="/sendPost" element={<SendPost />} />
+      <Route path="/sendpost" element={<SendPost />} />
       <Route path="/login" element={<Login/>} />
       <Route path="/map" element={<Map />} />
       </Routes>

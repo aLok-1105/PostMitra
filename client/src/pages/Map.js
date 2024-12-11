@@ -4,7 +4,7 @@ import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
 import { useLocation } from "react-router-dom";
 import axios from "axios";
-// import './map.css';
+import './map.css';
 
 const Map = () => {
   const markers = [
@@ -82,9 +82,10 @@ const Map = () => {
     <div className='map-component'>
       <div className="map-component-2">
         <div>
-          <h2>Route Planner</h2>
+          <div> <h2>Route Planner</h2> </div>
+          
           <div style={{ marginBottom: "15px" }}>
-            <label htmlFor="source" style={{ display: "block", marginBottom: "5px" }}>
+            <label htmlFor="source" style={{ display: "block", marginBottom: "10px" }}>
               Source:
             </label>
             <input
