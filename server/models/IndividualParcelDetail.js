@@ -23,7 +23,7 @@ parcelId: { type: String, required: true },
   trackingId: {
     type: String,
     default: function() {
-        return this.parcelId.slice(0, 3) + this.parcelId.slice(-3); 
+        return this.parcelId.slice(0, 3) + this.parcelId.slice(-4); 
     }
   }
 });
@@ -31,5 +31,24 @@ parcelId: { type: String, required: true },
 const IndividualParcelDetail = mongoose.model('IndividualParcelDetail', ParcelDetail);
 
 
+const countDetailsSchema = new mongoose.Schema({
+    shortId: { type: String, unique: true, required: true }, 
+    count: { type: Number, default: 0 }, 
+    details: [
+        {
+            trackingId: { type: String, required: true }, 
+            path: [
+                {
+                    location: { type: String, required: true }, 
+                    status: { type: String, required: true },  
+                    timestamp: { type: Date, default: Date.now } 
+                }
+            ],
+            currentStatus: { type: String, required: true } 
+        }
+    ]
+});
 
-module.exports = IndividualParcelDetail;
+const ParcelsDetail = mongoose.model('ParcelsDetail', countDetailsSchema);
+
+module.exports = IndividualParcelDetail, ParcelsDetail;

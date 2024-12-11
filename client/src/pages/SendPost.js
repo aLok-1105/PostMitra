@@ -1,5 +1,6 @@
 
 //Interface for the parcel collector entering parcel details
+import axios from 'axios';
 import React,{useEffect,useState} from 'react'
 
 const SendPost = () => {
@@ -76,12 +77,23 @@ const SendPost = () => {
     e.preventDefault();
     
     const weight = parcelData.weight;
-    var parcelId = parcelData.senderDetails.pincode.slice(0, 3) + Math.random().toString(36).slice(2, 8) + parcelData.receiverDetails.pincode.slice(0, 3);
+    let val;
+    if(parcelData.postType === '"normal"'){
+      val = '0';
+    }
+    else{
+      val = '1';
+    }
+
+    var parcelId = parcelData.senderDetails.pincode.slice(0, 3) + Math.random().toString(36).slice(2, 8) + parcelData.receiverDetails.pincode.slice(0, 3) + val;
     
     setparcelId(parcelId)
+    console.log(parcelId);
+    
     setParcelData((prevData) => ({
       ...prevData,
-      cost: weight.toString()
+      cost: weight.toString(),
+      parcelId: parcelId
     }));
     
     // console.log(weight);
@@ -90,7 +102,7 @@ const SendPost = () => {
     
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     // Validation
     if(!isValid)
@@ -98,9 +110,22 @@ const SendPost = () => {
      alert("Please fill in all required fields.");
      return;
     }
-     console.log(parcelData);
-     setParcelData(initializer)
-     alert(`Your Tracking Id is: ${parcelId}`)
+    try {
+      // Send POST request to backend
+      const response = await axios.post('http://localhost:8000/parcel/registerParcel', parcelData, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true, 
+    });
+      // console.log(response.data);
+      // console.log(parcelId);
+      
+      alert(`Your Tracking Id is: ${parcelId}`);
+      setParcelData(initializer); // Reset form
+    } catch (error) {
+      // Handle error during request
+      console.error("Error submitting parcel data:", error);
+      alert("Failed to submit parcel data. Please try again.");
+    }
   }
 
   return (
