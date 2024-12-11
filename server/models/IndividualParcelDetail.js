@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const ParcelDetail = new mongoose.Schema({
 parcelId: { type: String, required: true },
   date: { type: String, required: true }, 
-  weight: { type: String, required: false },
+  weight: { type: Number, required: false },
   cost: { type: String, required: false }, 
   postType: { type: String, required: false }, 
   senderDetails: {

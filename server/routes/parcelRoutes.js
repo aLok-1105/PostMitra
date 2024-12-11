@@ -45,19 +45,28 @@ router.get('/showParcels', authenticate, async (req, res) => {
   try {
     const { email } = req.user;
     const pincode = String(email).slice(3, 6); // Extract the starting pincode
-    
-    // Use MongoDB's aggregation to group parcels by source and destination pincodes
+
+    // Use MongoDB's aggregation pipeline
     const parcels = await IndividualParcelDetail.aggregate([
       {
-        $match: { 'senderDetails.pincode': new RegExp(`^${pincode}`) } // Match source pincodes starting with `pincode`
+        $match: { 
+          'senderDetails.pincode': new RegExp(`^${pincode}`) // Match source pincodes starting with `pincode`
+        }
+      },
+      {
+        $addFields: {
+          numericWeight: { $toDouble: '$weight' } // Convert weight to numeric
+        }
       },
       {
         $group: {
           _id: { 
             src: '$senderDetails.pincode', 
-            dest: '$receiverDetails.pincode' 
+            dest: '$receiverDetails.pincode',
+            postType: '$postType' // Group by source, destination, and post type
           },
-          count: { $sum: 1 } // Count parcels in each group
+          count: { $sum: 1 }, // Count parcels in each group
+          cumulativeWeight: { $sum: '$numericWeight' } // Use numeric weight
         }
       },
       {
@@ -65,13 +74,18 @@ router.get('/showParcels', authenticate, async (req, res) => {
           _id: 0,
           src: '$_id.src',
           dest: '$_id.dest',
-          count: 1
+          postType: '$_id.postType',
+          count: 1,
+          cumulativeWeight: 1
         }
+      },
+      {
+        $sort: { src: 1, dest: 1, postType: 1 } // Optional: Sort by source, destination, and post type
       }
     ]);
-    
-    console.log(`Parcel counts for pincode ${pincode}:`, parcels);
-    
+
+    console.log(`Parcel data for pincode ${pincode}:`, parcels);
+
     res.status(200).json({
       message: 'Parcels data fetched successfully',
       parcels
@@ -81,6 +95,5 @@ router.get('/showParcels', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error fetching parcels' });
   }
 });
-
 
 module.exports = router;  

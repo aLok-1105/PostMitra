@@ -1,5 +1,6 @@
-
+import axios from "axios";
 import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -10,14 +11,17 @@ const Login = () => {
   const handleSubmit = async (ev) => {
     ev.preventDefault();
     try {
-      const response = await fetch("http://localhost:8000/authRoutes/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password, role }), // Include role in the payload
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
+      const response = await axios.post('http://localhost:8000/auth/login', {
+        email,
+        password,
+        role
+      }, {
+        headers: { 'Content-Type': 'application/json' },
+        withCredentials: true, // This option cookies with cross-site requests
       });
 
-      if (response.ok) {
+
+      if (response.status === 200 && response.data.role === "Officer") {
         setError("");
         alert("Login successful!");
       } else {
