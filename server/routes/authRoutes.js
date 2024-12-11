@@ -9,13 +9,13 @@ const router = express.Router();  // Create a new router
 // Register route
 router.post('/register', async (req, res) => {
   try {
-    const { username, password, role } = req.body;
+    const { email, password, role } = req.body;
 
     if (!['Operator', 'Officer'].includes(role)) {
       return res.status(400).send('Invalid role. Allowed roles: Operator, Officer');
     }
 
-    const newUser = new User({ username, password, role });
+    const newUser = new User({ email, password, role });
     await newUser.save();
     res.status(201).send('User registered successfully');
   } catch (err) {
@@ -26,20 +26,28 @@ router.post('/register', async (req, res) => {
 // Login route
 router.post('/login', async (req, res) => {
   try {
-    const { username, password } = req.body;
-    const user = await User.findOne({ username });
+    const { email, password } = req.body;
+    
+    const user = await User.findOne({ email });
     if (!user) return res.status(404).send('User not found');
 
     const isValid = await user.comparePassword(password);
     if (!isValid) return res.status(401).send('Invalid credentials');
 
     const token = jwt.sign(
-      { id: user._id, username: user.username, role: user.role },
+      { id: user._id, email: user.email, role: user.role },
       config.jwtSecret,
       { expiresIn: config.jwtExpiresIn }
     );
+    
+    res.cookie('token', token, {
+      httpOnly: true, // Can't be accessed via JavaScript
+      secure: process.env.NODE_ENV === 'production', // Use HTTPS in production
+      maxAge: 3600000, // 1 hour
+      sameSite: 'strict', // Helps prevent CSRF attacks
+  });
 
-    res.status(200).json({ token, role: user.role });
+    res.status(200).json({ token, role: user.role, email: user.email});
   } catch (err) {
     res.status(500).send('Error: ' + err.message);
   }

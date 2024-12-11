@@ -1,24 +1,30 @@
 import React, { useState } from "react";
+import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 
 const Officer = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleSubmit = async (ev) => {
     ev.preventDefault();
     try {
-      const response = await fetch('http://localhost:3000/authRoutes/login', {
-        method: 'POST',
-        body: JSON.stringify({ email, password }),
+      const response = await axios.post('http://localhost:8000/auth/login', {
+        email,
+        password,
+      }, {
         headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
+        withCredentials: true, // This option is required to send cookies with cross-site requests
       });
-
-      if (response.ok) {
+    
+      if (response.status === 200) {
         setError('');
-        alert('Login successful!');
+        // alert('Login successful!');  
+        navigate('/post');
       } else {
+        console.log("Invalid Credentials");
         setError('Invalid Credentials');
       }
     } catch (error) {
@@ -41,8 +47,8 @@ const Officer = () => {
     <div style={styles.container}>
       <h1 style={styles.title}>Login</h1>
       <form onSubmit={handleSubmit} style={styles.form}>
-        <input type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} required />
-        <input type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={styles.input} required />
+        <input name="email" type="email" placeholder="Email" value={email} onChange={(e) => setEmail(e.target.value)} style={styles.input} required />
+        <input name="password" type="password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)} style={styles.input} required />
         {error && <p style={styles.error}>{error}</p>}
         <button
           type="submit"

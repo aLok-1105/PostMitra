@@ -3,6 +3,7 @@ import { Route,Routes } from 'react-router-dom';
 import Clerk from './pages/Clerk';
 import Officer from './pages/Officer';
 import Map from './pages/Map';
+import Post from './pages/Post';
 
 
 function App() {
@@ -18,6 +19,7 @@ function App() {
         <Route path='/operator' element={<Clerk/>}/>
         <Route path='/officer' element={<Officer/>}/>
         <Route path='/map' element={<Map/>}/>
+        <Route path='/post' element={<Post/>}/>
       </Routes>
     </div>
   );
