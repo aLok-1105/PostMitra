@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
 import { useLocation } from "react-router-dom";
@@ -22,11 +22,11 @@ const Map = () => {
     { geocode: [26.1445, 91.7362], popUp: "Guwahati" },
     { geocode: [17.6869, 83.2185], popUp: "Vizag" },
     { geocode: [23.0225, 72.5714], popUp: "Ahmedabad" },
-    { geocode: [23.1815, 75.7812], popUp: "Bhopal" },
-    { geocode: [17.3854, 78.4867], popUp: "Hyderabad" },
-    { geocode: [26.9196, 73.0334], popUp: "Jodhpur" },
+    { geocode: [23.2599, 77.4126], popUp: "Bhopal" },
+    { geocode: [17.3850, 78.4867], popUp: "Hyderabad" },
+    { geocode: [26.2389, 73.0243], popUp: "Jodhpur" },
     { geocode: [22.5726, 88.3639], popUp: "Kolkata" },
-    { geocode: [15.4909, 73.8278], popUp: "Panaji" },
+    { geocode: [15.2993, 74.1240], popUp: "Panaji" },
     { geocode: [19.2961, 84.7915], popUp: "Visakhapatnam" },
   ];
 
@@ -34,6 +34,16 @@ const Map = () => {
     iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
     iconSize: [25, 25],
   });
+
+  const sourceIcon = new Icon({
+    iconUrl: "https://cdn1.iconfinder.com/data/icons/social-messaging-ui-color/254000/66-512.png", // Blue icon
+    iconSize: [45, 45],
+  });
+  
+  const destinationIcon = new Icon({
+    iconUrl: "https://cdn1.iconfinder.com/data/icons/social-messaging-ui-color/254000/66-512.png", // Green icon
+    iconSize: [45, 45],
+  });
 
   const location = useLocation();
   const [source, setSource] = useState("");
@@ -193,10 +203,22 @@ const Map = () => {
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           {markers.map((marker, index) => (
-            <Marker key={index} position={marker.geocode} icon={customIcon}>
-              <Popup>{marker.popUp}</Popup>
-            </Marker>
-          ))}
+  <Marker
+    key={index}
+    position={marker.geocode}
+    icon={
+      marker.popUp === source
+        ? sourceIcon // Blue for Source
+        : marker.popUp === destination
+        ? destinationIcon // Green for Destination
+        : customIcon // Default for others
+    }
+  >
+    <Popup>{marker.popUp}</Popup>
+    <Tooltip>{marker.popUp}</Tooltip>
+  </Marker>
+))}
+
           {topPaths.map((pathObj, index) => (
             <Polyline
               key={index}
