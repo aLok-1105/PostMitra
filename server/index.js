@@ -1,343 +1,488 @@
-const express = require('express');
-const mongoose = require('mongoose');
 
-require('dotenv').config();
-const connectDB = require('./config/db');
-const authRoutes = require('./routes/authRoutes'); 
-const parcelRoutes = require('./routes/parcelRoutes'); 
-const cookieParser = require('cookie-parser');
-const axios = require('axios');
-const cors = require('cors');
+// import { WebSocketServer } from 'ws';
+// import { createServer } from 'http';
+// import { parse } from 'url';
+// import { connect, Schema, model } from "mongoose";
 
-connectDB();
+const { WebSocketServer } = require('ws');
+const { createServer } = require('http');
+const { parse } = require('url');
+const { connect, Schema, model } = require('mongoose');
 
-const app = express();
-app.use(express.urlencoded({extended: true}));
+// MongoDB connection setup
+const MONGODB_URI = "mongodb+srv://postmitra:posrmitra121@postmitra.rk7jk.mongodb.net/?retryWrites=true&w=majority&appName=PostMitra";
+// const dbName = 'parcelDB';
+// const client = new MongoClient(mongoUri);
 
-app.use(express.json());
-  app.use(cookieParser());
-  app.use(cors({
-    origin: 'http://localhost:3000',
-    methods: 'GET,POST,PUT,DELETE',
-    allowedHeaders: 'Content-Type,Authorization',
-    credentials: true // Required for cookies
-  }));
+async function connectToDatabase() {
+  try {
+    await connect(MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    });
+    console.log("Connected to MongoDB successfully.");
+  } catch (error) {
+    console.error("Error connecting to MongoDB:", error);
+    process.exit(1); // Exit process with failure
+  }
+}
 
 
+// Call the function to connect
+connectToDatabase();
 
-app.use('/auth', authRoutes);  // All routes in authRoutes.js will be prefixed with /auth
-app.use('/parcel', parcelRoutes);
+const parcelSchema = new Schema({
+  parcelId: { type: String, required: true },
+  path: { type: [String], required: true },
+  type: { type: String, enum: ["incoming", "outgoing", "previous", "delivered"], required: true },
+  currentNode: { type: String },
+  // action: { type: String },
+});
 
+const trackingSchema = new Schema({
+  parcelId: { type: String, required: true },
+  message: { type: [String], required: true },
+  time: { type: [String], required: true }
+});
 
-// MongoDB connection
-// mongoose.connect(
-//   'mongodb+srv://alokranjan11052003:alok@cluster0.eq7el.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0',
-//   { useNewUrlParser: true, useUnifiedTopology: true }
-// );
+const Parcel = model("Parcel", parcelSchema);
+const Track = model("Track", trackingSchema);
 
-// Cities list
-const cities = [
-  'Ahmedabad', 'Amritsar', 'Bangalore', 'Bhopal', 'Chennai',
-  'Delhi', 'Guwahati', 'Gwalior', 'Hyderabad', 'Jodhpur',
-  'Kochi', 'Kolkata', 'Lucknow', 'Mumbai', 'Nagpur',
-  'Panaji', 'Patna', 'Visakhapatnam'
+const parcelsData = [
+  
+    { parcelId: "P001", path: ["Nagpur", "Delhi", "Patna"], type: "incoming", currentNode: "Nagpur" },
+    { parcelId: "P002", path: ["Patna", "Nagpur", "Delhi"], type: "incoming", currentNode: "Patna" },
+    { parcelId: "P003", path: ["Delhi", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
+    { parcelId: "P004", path: ["Delhi", "Patna", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
+    { parcelId: "P005", path: ["Nagpur", "Patna", "Delhi"], type: "incoming", currentNode: "Nagpur" },
+    { parcelId: "P006", path: ["Nagpur", "Delhi"], type: "outgoing", currentNode: "Nagpur" },
+    { parcelId: "P007", path: ["Patna", "Nagpur"], type: "outgoing", currentNode: "Patna" },
+  
 ];
 
-const cityMappings = {
-  'Ahmedabad': ['ADI', 380001],
-  'Amritsar': ['ASR', 143001],
-  'Bangalore': ['SBC', 560001],
-  'Bhopal': ['BPL', 462001],
-  'Chennai': ['MAS', 600001],
-  'Delhi': ['NDLS', 110001],
-  'Guwahati': ['GHY', 781001],
-  'Gwalior': ['GWL', 474001],
-  'Hyderabad': ['HYB', 500001],
-  'Jodhpur': ['JU', 342001],
-  'Kochi': ['ERS', 682001],
-  'Kolkata': ['HWH', 700001],
-  'Lucknow': ['LKO', 226001],
-  'Mumbai': ['CSTM', 400001],
-  'Nagpur': ['NGP', 440001],
-  'Panaji': ['QLM', 403001],
-  'Patna': ['PNBE', 800001],
-  'Visakhapatnam': ['VSKP', 530001]
-};
 
+const server = createServer();
+const wsServer = new WebSocketServer({ server });
 
-// MongoDB schema for node data
-const NodeSchema = new mongoose.Schema({
-  city: String,
-  pincode: String,
-  transportModes: [String],
-  spaceAvailability: Number,
-});
-const Node = mongoose.model('Node', NodeSchema);
+const port = 8080;
+const connections = {};
 
-// MongoDB schema for adjacency matrix
-const AdjacencySchema = new mongoose.Schema({
-  matrix: [[Number]],
-});
-const Adjacency = mongoose.model('Adjacency', AdjacencySchema);
+insertMultipleParcels(parcelsData)
+  .then(savedParcels => {
+    console.log("Saved Parcels:", savedParcels);
+  })
+  .catch(err => {
+    console.error("Failed to save parcels:", err);
+  });
 
-// Helper function to initialize sample data
-async function initializeData() {
-  const existingNodes = await Node.find();
-  const existingAdjacency = await Adjacency.findOne();
+wsServer.on('connection', async (connection, request) => {
+  const { username } = parse(request.url, true).query;
+//   const { username }  = req.url.split('username=')[1];
+  console.log(`${username} connected`);
 
-  if (existingNodes.length === 0) {
-    for (const city of cities) {
-      await Node.create({
-        city,
-        pincode: Math.floor(100000 + Math.random() * 900000).toString(),
-        transportModes: ['Road', 'Train', 'Flight'],
-        spaceAvailability: Math.random() * 100,
-      });
-    }
-    console.log('Nodes initialized.');
+  // Store the connection for each currentNode
+  connections[username] = connection;
+  try {
+    const parcels = await fetchParcelsByCurrentNode(username);
+    const tracks = await fetchTracks();
+    if(username !== "tracking"){connection.send(JSON.stringify({ type: "initial_parcels", data: parcels }));}
+    else{connection.send(JSON.stringify({ type: "tracking", data: tracks }));}
+  } catch (error) {
+    console.error("Error fetching parcels:", error);
   }
 
-  if (!existingAdjacency) {
-    const matrix = Array(cities.length)
-      .fill(null)
-      .map(() => Array(cities.length).fill(null));
+  // Handle incoming messages
+  connection.on('message', async (message) => {
+    const parcel = JSON.parse(message);
+    console.log(`Received message:`, parcel);
 
-    for (let i = 0; i < cities.length; i++) {
-      for (let j = 0; j < cities.length; j++) {
-        if (i !== j) {
-          matrix[i][j] = Math.floor(100 + Math.random() * 400); // Random travel time
+    const currentNodeIndex = parcel.path.indexOf(parcel.currentNode);
+    if (parcel.action === 'Send') {
+      if (currentNodeIndex !== -1 && currentNodeIndex < parcel.path.length - 1) {
+        // Update the parcel for the next node
+        const nextNode = parcel.path[currentNodeIndex + 1];
+        // parcel.currentNode = nextNode;
+        // parcel.type = 'incoming';
+        timestamp = new Date().toLocaleString();
+        const trackingMessage = {
+          parcelId: parcel.parcelId,
+          message: `Parcel sent from ${parcel.path[currentNodeIndex]}`,
+          time: timestamp
         }
+        // broadcastMessage(parcel.parcelId, trackingMessage);
+        
+        insertSingleTrack(trackingMessage)
+          .then(savedTrack => {
+            console.log("Saved track:", savedTrack);
+          })
+          .catch(err => {
+            console.error("Failed to save tracking step:", err);
+          });
+
+          try {
+            const tracks = await fetchTracks();
+            connections['tracking'].send(JSON.stringify(tracks));
+          } catch (error) {
+            console.error("Error fetching parcels:", error);
+          }
+
+        // connections['tracking'].send(
+            // JSON.stringify({parcelid: parcel.parcelId, message: trackingMessage})
+        // );
+        console.log(`Sending parcel to ${nextNode}`);
+        const parcelData = {
+          parcelId: parcel.parcelId,
+          path: parcel.path,
+          type: 'incoming',
+          currentNode: nextNode
+        };
+        const parcelData2 = {
+          parcelId: parcel.parcelId,
+          path: parcel.path,
+          type: 'previous',
+          currentNode: parcel.currentNode
+        };
+        if (connections[nextNode]) {
+
+          deleteParcelByKeys("parcelId", parcel.parcelId, "type", parcel.type)
+          .then(deletedParcel => {
+          if (deletedParcel) {
+            console.log("Deleted Parcel:", deletedParcel);
+          } else {
+            console.log("Parcel not found for deletion.");
+          }
+          })
+          .catch(err => {
+            console.error("Failed to delete parcel:", err);
+          });
+
+          insertSingleParcel(parcelData)
+          .then(savedParcel => {
+            console.log("Saved Parcel:", savedParcel);
+          })
+          .catch(err => {
+            console.error("Failed to save parcel:", err);
+          });
+
+          try {
+            const parcels = await fetchParcelsByCurrentNode(nextNode);
+            connections[nextNode].send(JSON.stringify({ type: "update_parcels", data: parcels }));
+          } catch (error) {
+            console.error("Error fetching parcels:", error);
+          }
+        }
+        else{
+            console.log("invalid path")
+        }
+        // parcel.type = 'previous';
+        // connections[parcel.path[currentNodeIndex]].send(JSON.stringify(parcel));
+        await insertSingleParcel(parcelData2)
+        .then(savedParcel => {
+          console.log("Saved Parcel:", savedParcel);
+        })
+        .catch(err => {
+          console.error("Failed to save parcel:", err);
+        });
+        try {
+          const parcels = await fetchParcelsByCurrentNode(username);
+          connection.send(JSON.stringify({ type: "update_parcels", data: parcels }));
+        } catch (error) {
+          console.error("Error fetching parcels:", error);
+        }
+      } else {
+        console.log('Invalid path for sending.');
+      }
+    } else if (parcel.action === 'Received') {
+      if (currentNodeIndex !== -1 && currentNodeIndex < parcel.path.length - 1) {
+        // const trackingMessage = `Parcel received at ${parcel.currentNode}`;
+        // connections['tracking'].send(
+        //     JSON.stringify({parcelid: parcel.parcelId, message: trackingMessage})
+        // );
+        timestamp = new Date().toLocaleString();
+        const trackingMessage = {
+          parcelId: parcel.parcelId,
+          message: `Parcel received at ${parcel.currentNode}`,
+          time: timestamp
+        }
+
+        insertSingleTrack(trackingMessage)
+          .then(savedTrack => {
+            console.log("Saved track:", savedTrack);
+          })
+          .catch(err => {
+            console.error("Failed to save tracking step:", err);
+          });
+
+          try {
+            const tracks = await fetchTracks();
+            connections['tracking'].send(JSON.stringify(tracks));
+          } catch (error) {
+            console.error("Error fetching parcels:", error);
+          }
+
+        // Update the type for the current node
+        // parcel.type = 'outgoing';
+        console.log(`Sending parcel to the next node...`);
+        const parcelData3 = {
+          parcelId: parcel.parcelId,
+          path: parcel.path,
+          type: 'outgoing',
+          currentNode: parcel.currentNode
+        };
+
+        deleteParcelByKeys("parcelId", parcel.parcelId, "type", parcel.type)
+          .then(deletedParcel => {
+          if (deletedParcel) {
+            console.log("Deleted Parcel:", deletedParcel);
+          } else {
+            console.log("Parcel not found for deletion.");
+          }
+          })
+          .catch(err => {
+            console.error("Failed to delete parcel:", err);
+          });
+
+        await insertSingleParcel(parcelData3)
+        .then(savedParcel => {
+          console.log("Saved Parcel:", savedParcel);
+        })
+        .catch(err => {
+          console.error("Failed to save parcel:", err);
+        });
+        try {
+          const parcels = await fetchParcelsByCurrentNode(username);
+          connection.send(JSON.stringify({ type: "update_parcels", data: parcels }));
+        } catch (error) {
+          console.error("Error fetching parcels:", error);
+        }
+        // if (connections[parcel.currentNode]) {
+        //   connections[parcel.currentNode].send(
+        //     JSON.stringify(parcel)
+        //   );
+        
+        // }
+        // else{
+        // console.log("invalid path")
+        // }
+      } else {
+        // const trackingMessage = `Parcel received at ${parcel.currentNode}`;
+        // connections['tracking'].send(
+        //     JSON.stringify({parcelid: parcel.parcelId, message: trackingMessage})
+        // );
+        // const deliveryMessage = `Delivered`;
+        // connections['tracking'].send(
+        //     JSON.stringify({parcelid: parcel.parcelId, message: deliveryMessage})
+        // );
+        timestamp = new Date().toLocaleString();
+        const trackingMessage = {
+          parcelId: parcel.parcelId,
+          message: `Parcel received at ${parcel.currentNode}`,
+          time: timestamp
+        }
+
+        insertSingleTrack(trackingMessage)
+          .then(savedTrack => {
+            console.log("Saved track:", savedTrack);
+          })
+          .catch(err => {
+            console.error("Failed to save tracking step:", err);
+          });
+
+          try {
+            const tracks = await fetchTracks();
+            connections['tracking'].send(JSON.stringify(tracks));
+          } catch (error) {
+            console.error("Error fetching parcels:", error);
+          }
+
+          timestamp = new Date().toLocaleString();
+          const deliveryMessage = {
+            parcelId: parcel.parcelId,
+            message: `Delivered`,
+            time: timestamp
+          }
+  
+          insertSingleTrack(deliveryMessage)
+            .then(savedTrack => {
+              console.log("Saved track:", savedTrack);
+            })
+            .catch(err => {
+              console.error("Failed to save tracking step:", err);
+            });
+  
+            try {
+              const tracks = await fetchTracks();
+              connections['tracking'].send(JSON.stringify(tracks));
+            } catch (error) {
+              console.error("Error fetching parcels:", error);
+            }
+
+        const parcelData4 = {
+          parcelId: parcel.parcelId,
+          path: parcel.path,
+          type: 'delivered',
+          currentNode: parcel.currentNode
+        };
+
+        deleteParcelByKeys("parcelId", parcel.parcelId, "type", parcel.type)
+          .then(deletedParcel => {
+          if (deletedParcel) {
+            console.log("Deleted Parcel:", deletedParcel);
+          } else {
+            console.log("Parcel not found for deletion.");
+          }
+          })
+          .catch(err => {
+            console.error("Failed to delete parcel:", err);
+          });
+          
+        await insertSingleParcel(parcelData4)
+        .then(savedParcel => {
+          console.log("Saved Parcel:", savedParcel);
+        })
+        .catch(err => {
+          console.error("Failed to save parcel:", err);
+        });
+
+        // await updateParcelInDatabase(
+        //   { parcelId: parcel.parcelId, currentNode: parcel.currentNode }, // Query object
+        //   { type: "delivered" } // Update object
+        // );
+        console.log('Delivered:', parcel);
       }
     }
-    
-    await Adjacency.create({ matrix });
-    console.log('Adjacency matrix initialized.');
-}
-else{
-    for (let i = 0; i < cities.length; i++) {
-      for (let j = 0; j < cities.length; j++) {
-        if (i !== j) {
-            updateTravelTime(cities[i], cities[j]);
-        }
-      }
+  });
+
+  // Handle connection close
+  connection.on('close', () => {
+    const disconnectedNode = Object.keys(connections).find(
+      (node) => connections[node] === connection
+    );
+    if (disconnectedNode) {
+      console.log(`${disconnectedNode} disconnected`);
+      delete connections[disconnectedNode];
     }
-    console.log("Done!!");
-    
-}
-}
+  });
+});
 
+server.listen(port, () => {
+  console.log(`WebSocket server is running on port ${port}`);
+});
 
-
-// Utility function to calculate the time difference in hours and minutes
-function calculateTimeDifference(startTime, endTime) {
-  const [startHours, startMinutes] = startTime.split(':').map(Number);
-  const [endHours, endMinutes] = endTime.split(':').map(Number);
-
-  let totalStartMinutes = startHours * 60 + startMinutes;
-  let totalEndMinutes = endHours * 60 + endMinutes;
-
-  if (totalEndMinutes < totalStartMinutes) {
-    // Train crosses midnight, add 24 hours to the end time
-    totalEndMinutes += 24 * 60;
+async function fetchParcelsByCurrentNode(currentNode) {
+  try {
+    const parcels = await Parcel.find({ currentNode });
+    return parcels;
+  } catch (error) {
+    console.error("Error fetching parcels by current node:", error);
+    throw error;
   }
-
-  const totalMinutes = totalEndMinutes - totalStartMinutes;
-  const hours = Math.floor(totalMinutes / 60);
-  const minutes = totalMinutes % 60;
-
-  return { hours, minutes };
-}
-
-// Main function to calculate time between two cities
-function calculateTime(city1, city2){
-  return 1;
-}
-
-async function updateTravelTime(city1, city2) {
+}  
+async function fetchTracks() {
     try {
-        const time = calculateTime(city1, city2)
-      if (!city1 || !city2 || !time) {
-        throw new Error('City1, City2, and time are required.');
-      }
-  
-      const index1 = cities.indexOf(city1);
-      const index2 = cities.indexOf(city2);      
-
-      if (index1 === -1 || index2 === -1) {
-        throw new Error('One or both cities not found.');
-      }
-  
-      // Fetch the adjacency matrix
-      const adjacencyData = await Adjacency.findOne();
-      if (!adjacencyData) throw new Error('Adjacency matrix not found.');
-  
-      const matrix = adjacencyData.matrix;
-  
-      // Update the travel time in the matrix
-      matrix[index1][index2] = time;
-      matrix[index2][index1] = time;
-  
-      // Recalculate all-pairs shortest paths
-      const { dist, nextNode } = floydWarshall(matrix);
-  
-      // Update the database with the new matrix using `findOneAndUpdate`
-      const updatedData = await Adjacency.findOneAndUpdate(
-        { _id: adjacencyData._id }, // Filter by document ID
-        { matrix: dist },           // Update with new matrix
-        { new: true, useFindAndModify: false } // Return updated document
-      );
-
-    //   console.log(updatedData);
-    // adjacencyData.matrix = dist;
-    await adjacencyData.save(); 
-      
-      if (!updatedData) {
-        throw new Error('Failed to update the adjacency matrix.');
-      }
-  
-      return {
-        message: 'Travel time updated and matrix recalculated.',
-        updatedMatrix: updatedData.matrix,
-        nextNode,
-      };
+      const tracks = await Track.find({});
+      return tracks;
     } catch (error) {
-      console.error(error);
-      throw new Error(`Error while updating travel time: ${error.message}`);
+      console.error("Error fetching tracking information by parcel id:", error);
+      throw error;
     }
   }
-// Endpoint to update travel time and recalculate the matrix
-app.put('/api/graph/update-travel-time', async (req, res) => {
+
+async function saveParcelToDatabase(parcel) {
   try {
-    const { city1, city2, time } = req.body;
-
-    if (!city1 || !city2 || !time) {
-      return res.status(400).json({ error: 'City1, City2, and time are required.' });
-    }
-
-    const index1 = cities.indexOf(city1);
-    const index2 = cities.indexOf(city2);
-
-    if (index1 === -1 || index2 === -1) {
-      return res.status(404).json({ error: 'One or both cities not found.' });
-    }
-
-    const adjacencyData = await Adjacency.findOne();
-    if (!adjacencyData) return res.status(500).json({ error: 'Adjacency matrix not found.' });
-
-    const matrix = adjacencyData.matrix;
-
-    // Update the direct travel time
-    matrix[index1][index2] = time;
-    matrix[index2][index1] = time;
-
-    // Recalculate all-pairs shortest paths
-    const { dist, nextNode } = floydWarshall(matrix);
-
-    // Save updated matrix
-    adjacencyData.matrix = dist;
-    await adjacencyData.save();
-
-    res.status(200).json({ message: 'Travel time updated and matrix recalculated.' });
+    const newParcel = new Parcel(parcel);
+    await newParcel.save();
+    console.log("Parcel saved successfully:", newParcel);
+    return newParcel;
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error while updating travel time.' });
+    console.error("Error saving parcel to database:", error);
+    throw error;
   }
-});
-
-// Endpoint to get top 3 shortest paths
-app.post('/api/graph/get-shortest-paths', async (req, res) => {
-  try {
-    const { city1, city2 } = req.body;
-
-    if (!city1 || !city2) {
-      return res.status(400).json({ error: 'City1 and City2 are required.' });
-    }
-
-    const index1 = cities.indexOf(city1);
-    const index2 = cities.indexOf(city2);
-
-    if (index1 === -1 || index2 === -1) {
-      return res.status(404).json({ error: 'City not found.' });
-    }
-
-    const adjacencyData = await Adjacency.findOne();
-    if (!adjacencyData) return res.status(500).json({ error: 'Adjacency matrix not found.' });
-
-    const matrix = adjacencyData.matrix;
-    const { dist, nextNode } = floydWarshall(matrix);
-
-    function reconstructPath(i, j) {
-      const path = [];
-      while (i !== j) {
-        if (nextNode[i][j] === null) break;
-        path.push(cities[i]);
-        i = nextNode[i][j];
-      }
-      path.push(cities[j]);
-      return path;
-    }
-
-    const shortestPath = reconstructPath(index1, index2);
-    const topPaths = [{ path: shortestPath, distance: dist[index1][index2] }];
-
-    // Find additional paths with intermediate stops
-    for (let i = 0; i < cities.length && topPaths.length < 3; i++) {
-      if (i !== index1 && i !== index2 && dist[index1][i] < Infinity && dist[i][index2] < Infinity) {
-        const intermediatePath = [
-          ...reconstructPath(index1, i),
-          ...reconstructPath(i, index2).slice(1)
-        ];
-        const intermediateDistance = dist[index1][i] + dist[i][index2];
-
-        // Check for duplicates before adding
-        if (!topPaths.some(tp => JSON.stringify(tp.path) === JSON.stringify(intermediatePath))) {
-          topPaths.push({ path: intermediatePath, distance: intermediateDistance });
-        }
-      }
-    }
-
-    if (topPaths.length === 0) {
-      return res.status(404).json({ error: 'No paths found.' });
-    }
-
-    res.status(200).json({ topPaths });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Server error while retrieving paths.' });
-  }
-});
-
-
-// Floyd-Warshall Algorithm
-function floydWarshall(matrix) {
-  const n = matrix.length;
-  const dist = matrix.map(row => row.slice());
-  const nextNode = Array.from({ length: n }, () => Array(n).fill(null));
-
-  for (let i = 0; i < n; i++) {
-    for (let j = 0; j < n; j++) {
-      if (i !== j && dist[i][j] !== null) {
-        nextNode[i][j] = j;
-      }
-    }
-  }
-
-  for (let k = 0; k < n; k++) {
-    for (let i = 0; i < n; i++) {
-      for (let j = 0; j < n; j++) {
-        if (dist[i][k] + dist[k][j] < dist[i][j]) {
-          dist[i][j] = dist[i][k] + dist[k][j];
-          nextNode[i][j] = nextNode[i][k];
-        }
-      }
-    }
-  }
-
-  return { dist, nextNode };
 }
 
-// Start server
-const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
-});
+async function updateParcelInDatabase(query, update) {
+  try {
+    const result = await Parcel.updateOne(query, update);
+    console.log("Parcel updated:", result);
+  } catch (error) {
+    console.error("Error updating parcel:", error);
+    throw error;
+  }
+}
+
+
+async function insertMultipleParcels(parcelDataArray) {
+  try {
+    // Create multiple parcel documents based on the input array of parcel data
+    const parcels = parcelDataArray.map(data => new Parcel(data));
+    
+    // Save all parcels to the database
+    const savedParcels = await Parcel.insertMany(parcels);
+    
+    console.log("Parcels saved successfully:", savedParcels);
+    return savedParcels;  // Return the array of saved parcels
+  } catch (err) {
+    console.error("Error saving parcels:", err);
+    throw err;  // Rethrow the error to handle it outside the function
+  }
+}
+
+async function insertSingleParcel(parcelData) {
+  try {
+    // Create a new parcel document based on the input parcel data
+    const newParcel = new Parcel(parcelData);
+    
+    // Save the new parcel document to the database
+    const savedParcel = await newParcel.save();
+    
+    console.log("Parcel saved successfully:", savedParcel);
+    return savedParcel;  // Return the saved parcel document
+  } catch (err) {
+    console.error("Error saving parcel:", err);
+    throw err;  // Rethrow the error to handle it outside the function
+  }
+}
+
+async function insertSingleTrack(trackingMessage) {
+  try {
+    // Create a new parcel document based on the input parcel data
+    const newTrack = new Track(trackingMessage);
+    
+    // Save the new parcel document to the database
+    const savedTrack = await newTrack.save();
+    
+    console.log("Tracking step saved successfully:", savedTrack);
+    return savedTrack;  // Return the saved parcel document
+  } catch (err) {
+    console.error("Error saving tracking step:", err);
+    throw err;  // Rethrow the error to handle it outside the function
+  }
+}
+
+async function deleteParcelByKeys(key1, value1, key2, value2) {
+  try {
+    // Build the filter object dynamically
+    const filter = { [key1]: value1, [key2]: value2 };
+
+    // Find and delete the parcel matching the filter
+    const deletedParcel = await Parcel.findOneAndDelete(filter);
+    
+    if (deletedParcel) {
+      console.log("Parcel deleted successfully:", deletedParcel);
+      return deletedParcel; // Return the deleted parcel document
+    } else {
+      console.log("No parcel found with the given keys:", filter);
+      return null; // Indicate no parcel was found to delete
+    }
+  } catch (err) {
+    console.error("Error deleting parcel:", err);
+    throw err; // Rethrow the error to handle it outside the function
+  }
+}
+
+// Utility function to broadcast messages
+// function broadcastMessage(parcelId, message) {
+//   Object.values(connections).forEach((conn) => {
+//     conn.send(JSON.stringify({ parcelId, message }));
+//   });
+// }
