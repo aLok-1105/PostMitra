@@ -20,6 +20,7 @@
     "mongoose": "^8.8.2",
     "moongoose": "^0.0.1",
     "nodemon": "^3.1.7",
+    "server": "file:",
     "ws": "^8.18.0"
   }
 }

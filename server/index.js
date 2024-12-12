@@ -143,12 +143,22 @@ wsServer.on('connection', async (connection, request) => {
         console.log(`Sending parcel to ${nextNode}`);
         const parcelData = {
           parcelId: parcel.parcelId,
+          trackId: parcel.trackId,
+          source: parcel.source,
+          destination: parcel.destination,
+          weight: parcel.weight,
+          noOfBags: parcel.noOfBags,
           path: parcel.path,
           type: 'incoming',
           currentNode: nextNode
         };
         const parcelData2 = {
           parcelId: parcel.parcelId,
+          trackId: parcel.trackId,
+          source: parcel.source,
+          destination: parcel.destination,
+          weight: parcel.weight,
+          noOfBags: parcel.noOfBags,
           path: parcel.path,
           type: 'previous',
           currentNode: parcel.currentNode
@@ -167,7 +177,7 @@ wsServer.on('connection', async (connection, request) => {
             console.error("Failed to delete parcel:", err);
           });
 
-          insertSingleParcel(parcelData)
+          saveParcelToDatabase(parcelData)
           .then(savedParcel => {
             console.log("Saved Parcel:", savedParcel);
           })
@@ -187,7 +197,7 @@ wsServer.on('connection', async (connection, request) => {
         }
         // parcel.type = 'previous';
         // connections[parcel.path[currentNodeIndex]].send(JSON.stringify(parcel));
-        await insertSingleParcel(parcelData2)
+        await saveParcelToDatabase(parcelData2)
         .then(savedParcel => {
           console.log("Saved Parcel:", savedParcel);
         })
@@ -236,6 +246,11 @@ wsServer.on('connection', async (connection, request) => {
         console.log(`Sending parcel to the next node...`);
         const parcelData3 = {
           parcelId: parcel.parcelId,
+          trackId: parcel.trackId,
+          source: parcel.source,
+          destination: parcel.destination,
+          weight: parcel.weight,
+          noOfBags: parcel.noOfBags,
           path: parcel.path,
           type: 'outgoing',
           currentNode: parcel.currentNode
@@ -253,7 +268,7 @@ wsServer.on('connection', async (connection, request) => {
             console.error("Failed to delete parcel:", err);
           });
 
-        await insertSingleParcel(parcelData3)
+        await saveParcelToDatabase(parcelData3)
         .then(savedParcel => {
           console.log("Saved Parcel:", savedParcel);
         })
@@ -330,6 +345,11 @@ wsServer.on('connection', async (connection, request) => {
 
         const parcelData4 = {
           parcelId: parcel.parcelId,
+          trackId: parcel.trackId,
+          source: parcel.source,
+          destination: parcel.destination,
+          weight: parcel.weight,
+          noOfBags: parcel.noOfBags,
           path: parcel.path,
           type: 'delivered',
           currentNode: parcel.currentNode
@@ -347,7 +367,7 @@ wsServer.on('connection', async (connection, request) => {
             console.error("Failed to delete parcel:", err);
           });
           
-        await insertSingleParcel(parcelData4)
+        await saveParcelToDatabase(parcelData4)
         .then(savedParcel => {
           console.log("Saved Parcel:", savedParcel);
         })
@@ -456,22 +476,24 @@ async function insertMultipleParcels(parcelDataArray) {
 async function insertSingleParcel(parcelData) {
   try {
     // Create a new parcel document based on the input parcel data
-    newParcel = new Parcel(parcelData);
-    topPaths =[];
+    const inputParcel = new Parcel(parcelData);
+    // topPaths =[];
     try {
-      const response = await axios.post('http://localhost:8000/api/graph/get-shortest-paths', { city1: newParcel.source, city2: newParcel.destination });
-      topPaths = response.data.topPaths;
+      const response = await axios.post('http://localhost:8000/api/graph/get-shortest-paths', { city1: inputParcel.source, city2: inputParcel.destination });
+      // topPaths = response.data.topPaths;
+      console.log(response.data);
+      const newParcel = new Parcel({ ...parcelData, path: response.data.topPaths[0].path, trackId: inputParcel.parcelId });
+      const savedParcel = await newParcel.save();
+      console.log("Parcel saved successfully:", savedParcel);
+      return savedParcel;  // Return the saved parcel document
     } catch (error) {
       console.error("Error fetching shortest paths:", error);
     }
-    newParcel.path = topPaths[0];
-    newParcel.trackId = newParcel.parcelId
+    // newParcel.path = topPaths[0].path;
+    // newParcel.trackId = newParcel.parcelId
     
     // Save the new parcel document to the database
-    const savedParcel = await newParcel.save();
     
-    console.log("Parcel saved successfully:", savedParcel);
-    return savedParcel;  // Return the saved parcel document
   } catch (err) {
     console.error("Error saving parcel:", err);
     throw err;  // Rethrow the error to handle it outside the function

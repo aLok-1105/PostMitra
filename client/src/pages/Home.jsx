@@ -12,15 +12,13 @@ import {
   TableRow,
   Paper,
   Button,
+  Typography
 } from "@mui/material";
 import React, { useState, useEffect } from "react";
 
 export function Home({ username }) {
   const WS_URL = `ws://127.0.0.1:8080`;
-  // const { sendJsonMessage, lastJsonMessage } = useWebSocket(WS_URL, {
-  //   share: true,
-  //   queryParams: { username },
-  // });
+  
   const { sendJsonMessage, lastJsonMessage, readyState } = useWebSocket(WS_URL, {
     queryParams: { username }, // Pass username to WebSocket server
     onOpen: () => console.log("WebSocket connection opened"),
@@ -32,73 +30,15 @@ export function Home({ username }) {
   const [parcels, setParcels] = useState([]);
   const navigate = useNavigate(); // Hook for navigation
 
-  // Simulate initial parcels
-  // useEffect(() => {
-    // const initialParcels = [
-    //   { parcelId: "P001", path: ["Nagpur", "Delhi", "Patna"], type: "incoming", currentNode: "Nagpur" },
-    //   { parcelId: "P002", path: ["Patna", "Nagpur", "Delhi"], type: "incoming", currentNode: "Patna" },
-    //   { parcelId: "P003", path: ["Delhi", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
-    //   { parcelId: "P004", path: ["Delhi", "Patna", "Nagpur"], type: "outgoing", currentNode: "Delhi" },
-    //   { parcelId: "P005", path: ["Nagpur", "Patna", "Delhi"], type: "incoming", currentNode: "Nagpur" },
-    //   { parcelId: "P006", path: ["Nagpur", "Delhi"], type: "outgoing", currentNode: "Nagpur" },
-    //   { parcelId: "P007", path: ["Patna", "Nagpur"], type: "outgoing", currentNode: "Patna" },
-    // ];
-  //   setParcels(initialParcels);
-  // }, []);
-
-
   const handleSend = async(source, destination) => {
     navigate('/map', { state: { source, destination } });
-    // try{
-    //   const response = await axios.post('http://localhost:8000/api/graph/get-shortest-paths', { city1: source, city2: destination });
-
-    //   const paths = response.data.topPaths;
-    //   setShortestPaths(paths);
-    // }
-    // catch(err){
-    //   console.error("Error fetching shortest paths:", err);
-    // }
   };
 
   useEffect(() => {
     if (lastJsonMessage) {
       setParcels(lastJsonMessage.data);
-      // if (lastJsonMessage.type === "initial_parcels") {
-      //   // Initial parcel list
-      //   setParcels(lastJsonMessage.data);
-      // } else if (lastJsonMessage.type === "update_parcel") {
-      //   // Handle parcel updates
-      //   const updatedParcel = lastJsonMessage.data;
-
-      //   setParcels((prev) => {
-      //     const index = prev.findIndex(
-      //       (parcel) => parcel.parcelId === updatedParcel.parcelId
-      //     );
-
-      //     if (index === -1) {
-      //       return [...prev, updatedParcel]; // Add new parcel
-      //     } else {
-      //       const updatedParcels = [...prev];
-      //       updatedParcels[index] = updatedParcel; // Update existing parcel
-      //       return updatedParcels;
-      //     }
-      //   });
-      // }
     }
   }, [lastJsonMessage]);
-
-  // useEffect(() => {
-  //   const fetchParcels = async () => {
-  //     try {
-  //       const response = await axios.get("http://localhost:8000/api/parcels");
-  //       setParcels(response.data);
-  //     } catch (error) {
-  //       console.error("Error fetching parcels:", error);
-  //     }
-  //   };
-
-  //   fetchParcels();
-  // }, []);
 
 
   // Handle tab switching
@@ -119,40 +59,15 @@ export function Home({ username }) {
 
   // Handle actions (e.g., "Received" or "Send")
   const handleAction = (action, parcel) => {
-    // const updatedParcel = { ...parcel, action, currentNode: username };
-
-    // // Send message to the server
-    // sendJsonMessage(updatedParcel);
-
-    // // Remove the parcel from the current list
-    // setParcels((prev) => prev.filter((p) => p.parcelId !== parcel.parcelId));
-    // handleSend(updatedParcel.source, updatedParcel.destination);
-  };
-
-  const handleCheck = (action, parcel) => {
     const updatedParcel = { ...parcel, action, currentNode: username };
 
-    // Send message to the server
+    // // Send message to the server
     sendJsonMessage(updatedParcel);
 
-    // Remove the parcel from the current list
+    // // Remove the parcel from the current list
     setParcels((prev) => prev.filter((p) => p.parcelId !== parcel.parcelId));
-    handleSend(updatedParcel.source, updatedParcel.destination);
+    // handleSend(updatedParcel.source, updatedParcel.destination);
   };
-
-  // const handleAction = async (action, parcel) => {
-  //   const updatedParcel = { ...parcel, action, currentNode: username };
-
-  //   try {
-  //     // Update parcel in the database
-  //     await axios.put(`http://localhost:8000/api/parcels/${parcel.parcelId}`, updatedParcel);
-
-  //     // Remove the parcel from the current list
-  //     setParcels((prev) => prev.filter((p) => p.parcelId !== parcel.parcelId));
-  //   } catch (error) {
-  //     console.error("Error updating parcel:", error);
-  //   }
-  // };
 
   // Add parcel to the correct list based on server response
   useEffect(() => {
@@ -162,59 +77,112 @@ export function Home({ username }) {
     }
   }, [lastJsonMessage]);
 
-  // Handle Track button click
-  const handleTrack = (parcelId) => {
-    navigate(`/tracking`, { state: { parcelId } }); // Pass the parcelId to the tracking page
+  const handleCheck = (action, parcel) => {
+    handleSend(parcel.source, parcel.destination);
   };
-  const handleSendAll = () => {
-    
+
+  // Handle Track button click
+  // const handleTrack = (parcelId) => {
+  //   navigate(`/tracking`, { state: { parcelId } }); // Pass the parcelId to the tracking page
+  // };
+  const handleSendAll = (filteredParcels) => {
+    filteredParcels.forEach((parcel) => {
+      handleAction('send', parcel); // Assuming 'send' is the action you want to perform
+  });
   };
   const handleAlert = () => {
     
   };
 
   return (
+      <>
     <div>
-      <h1>{username} - Dashboard</h1>
-      <Button onClick={() => handleSendAll()}>Send All</Button>
-      <Button onClick={() => handleAlert()}>Calamitiy Alert</Button>
-      <Tabs value={tabValue} onChange={handleTabChange} aria-label="parcel tabs">
-        <Tab label="Incoming Parcels" />
-        <Tab label="Outgoing Parcels" />
-        <Tab label="Previous Parcels" />
-      </Tabs>
+      <h1 style={{color: 'white'}} >{username} - Dashboard</h1>
+      {/* <Button onClick={() => handleSendAll(filteredParcels)}>Send All</Button>
+      <Button onClick={() => handleAlert()}>Calamitiy Alert</Button> */}
+      </div>
+    <Typography style={{
+      fontSize: 50,
+      fontWeight: 'bold',
+      textAlign: 'center',
+      padding: '40px',
+      color: 'white'
 
+    }}>Sorting Hub Officer {username}</Typography>
+    {/* <Button variant="outlined"  style={{width: "200px", backgroundColor: "red"}}> */}
+    {/* Alert for Natural Calamities
+</Button> */}
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: "space-around"  
+    }}>
+    <button style={{border:"2px solid red", backgroundColor: 'red', width:"300px"  }}>Alert for Natural Calamities</button>
+    <button style={{border:"2px solid green", backgroundColor: 'green', width:"200px"  }} onClick={handleSendAll(filteredParcels)}>Send All</button>
+    </div>
+      <div 
+        style={
+          {
+            display: 'flex',
+            justifyContent: 'center',
+            marginBottom: '20px'
+          }
+        }
+      >
+        <div style={{
+          display: 'flex',
+          flexDirection: 'column',
+          width: '100%'
+        }}>
+        <div style={{marginBottom: '2px'}} >
+      <Tabs value={tabValue} onChange={handleTabChange} aria-label="parcel tabs">
+        <Tab style={{color: 'white'}} label="Incoming Parcels" />
+        <Tab style={{color: 'white'}} label="Outgoing Parcels" />
+        <Tab style={{color: 'white'}} label="Previous Parcels" />
+      </Tabs>
+      </div>
+      <div>
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
-            <TableRow>
-              <TableCell>Bag ID</TableCell>
-              <TableCell>Source</TableCell>
-              <TableCell>Destination</TableCell>
-              <TableCell>Optimal Path</TableCell>
-              <TableCell>Weight</TableCell>
-              <TableCell>No. of Bags</TableCell>
-              <TableCell>Alternate Path</TableCell>
-              <TableCell>Action</TableCell>
+            <TableRow style={{ backgroundColor: '#ffe5e5', borderTopLeftRadius: '8px', borderTopRightRadius: '8px' }}>
+              <TableCell style={{
+        borderRight: '1px solid #ddd', 
+        borderTopLeftRadius: '8px', 
+        fontWeight: 'bold'
+      }}>Tracking ID</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Source</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Destination</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Optimal Path</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Weight</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>No. of Parcels</TableCell>
+              <TableCell style={{ borderRight: '1px solid #ddd', fontWeight: 'bold' }}>Alternate Path</TableCell>
+              <TableCell style={{
+        borderTopRightRadius: '8px', 
+        fontWeight: 'bold', 
+        textAlign: 'center'
+      }}>Action</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
             {filteredParcels.map((parcel) => (
               <TableRow key={parcel.parcelId}>
-                <TableCell>{parcel.bagId}</TableCell>
-                <TableCell>{parcel.source}</TableCell>
-                <TableCell>{parcel.destination}</TableCell>
-                <TableCell>{parcel.path.join(" -> ")}</TableCell>
-                <TableCell>{parcel.weight}</TableCell>
-                <TableCell>{parcel.noOfBags}</TableCell>
-                <TableCell><Button
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.trackId}</TableCell>
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.source}</TableCell>
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.destination}</TableCell>
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.path.join(" -> ")}</TableCell>
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.weight}</TableCell>
+                <TableCell style={{ borderRight: '1px solid #ddd' }}>{parcel.noOfBags}</TableCell>
+                <TableCell align="center"><Button variant="contained"
+            color="primary"
                   onClick={() =>
                         handleCheck("Check", parcel)
                   
                       }>Check</Button></TableCell>
-                <TableCell>
+                <TableCell align="center">
                   {tabValue === 0 || tabValue === 1 ? (
-                    <Button
+                    <Button variant="contained"
+            color="primary"
                       onClick={() =>
                         handleAction(tabValue === 0 ? "Received" : "Send", parcel)
                   
@@ -237,6 +205,9 @@ export function Home({ username }) {
           </TableBody>
         </Table>
       </TableContainer>
+      </div>
+      </div>
     </div>
+    </>
   );
 }
