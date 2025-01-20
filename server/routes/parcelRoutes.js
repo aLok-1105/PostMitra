@@ -1,18 +1,13 @@
 const express = require('express');
 const IndividualParcelDetail = require('../models/IndividualParcelDetail');
 const authenticate = require('../middleware/auth');
-require('dotenv').config();
 const twilio = require('twilio');
-const app = express();
-app.use(express.json());
 
+const router = express.Router();  
 const accountSid = process.env.TWILIO_ACCOUNT_SID;
 const authToken = process.env.TWILIO_AUTH_TOKEN;
 const twilioPhoneNumber = process.env.TWILIO_PHONE_NUMBER;
-const twilioClient = twilio(accountSid, authToken);
-
-
-const router = express.Router();  
+const twilioClient = twilio(accountSid, authToken);
 
 const cityMappings = {
   "110": "Delhi",
@@ -38,27 +33,25 @@ const cityMappings = {
 router.post('/registerParcel', async (req, res) => {
   try {
     const parcelData = new IndividualParcelDetail(req.body);
-    // console.log(req.body);    
+    // console.log(req.body);
+    
     const savedParcel = await parcelData.save();
+
+    const senderPhone = "+918840110024";
+    const message = `Parcel with ID: ${parcelData.parcelId} has been registered successfully.`;
+
+    const response = await twilioClient.messages.create({
+      body: message,
+      from: twilioPhoneNumber,
+      to: senderPhone,
+    });
+    
+    console.log('Twilio response:', response.sid);
 
     res.status(201).json({
       message: 'Parcel created successfully',
       data: savedParcel
     });
-
-
-    // const senderPhone = "+918840110024";
-    // const message = `Parcel with ID: ${parcelData.parcelId} has been registered successfully.`;
-
-    // const response = await twilioClient.messages.create({
-    //   body: message,
-    //   from: twilioPhoneNumber,
-    //   to: senderPhone,
-    // });
-    
-    // console.log('Twilio response:', response.sid);
-
-
   } catch (err) {
     res.status(400).send('Error: ' + err.message);
   }
@@ -118,5 +111,16 @@ router.get('/showParcels', authenticate, async (req, res) => {
     res.status(500).json({ message: 'Error fetching parcels' });
   }
 });
+
+router.post('/delay-alert', async (req, res)=>{
+  const senderPhone = "+918840110024";
+  const message = `Your parcel is delayed at ${req.body.username} due to some calamity. Further updates will be shared.`;
+
+  const response = await twilioClient.messages.create({
+    body: message,
+    from: twilioPhoneNumber,
+    to: senderPhone,
+  });
+})
 
 module.exports = router;  
