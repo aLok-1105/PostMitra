@@ -1,8 +1,6 @@
 const { connect, Schema, model } = require('mongoose');
 const axios = require('axios');
-
-
-const MONGODB_URI = "mongodb+srv://postmitra:posrmitra121@postmitra.rk7jk.mongodb.net/?retryWrites=true&w=majority&appName=PostMitra";
+require('dotenv').config();
 // const dbName = 'parcelDB';
 // const client = new MongoClient(mongoUri);
 

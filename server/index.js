@@ -23,7 +23,6 @@ const twilioClient = twilio(accountSid, authToken);
 
 
 // MongoDB connection setup
-const MONGODB_URI = "mongodb+srv://postmitra:posrmitra121@postmitra.rk7jk.mongodb.net/?retryWrites=true&w=majority&appName=PostMitra";
 // const dbName = 'parcelDB';
 // const client = new MongoClient(mongoUri);
 
