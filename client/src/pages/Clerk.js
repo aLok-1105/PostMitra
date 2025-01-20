@@ -116,7 +116,7 @@ const Clerk = () => {
         headers: { 'Content-Type': 'application/json' },
         withCredentials: true, 
     });
-      console.log(response.data);
+      // console.log(response.data);
       // console.log(parcelId);
       
       alert(`Your Tracking Id is: ${parcelId}`);
@@ -130,7 +130,7 @@ const Clerk = () => {
 
   return (
     <>
-    <div className='inset-0 z-50 flex justify-center items-center bg-gray-300'>
+    <div className='fixed inset-0 z-50 flex justify-center items-center bg-gray-300'>
     <form onSubmit={handleSubmit} className='bg-white p-6 rounded-lg shadow-lg w-3/4 relative'>
        <h2 className='text-center font-bold text-3xl mb-3'>Parcel Details</h2>
 
@@ -314,7 +314,7 @@ const Clerk = () => {
         </div>
 
        </div>
-       <div className='my-5' style={{width: '200px', textAlign:'center'}}>
+       <div className='my-5'>
         <label htmlFor="">Cost (Rs.) : </label>
         <input 
         type="text"
@@ -323,7 +323,7 @@ const Clerk = () => {
         onChange={handleInputChange}
         className="border p-1 rounded border-gray-300"
         />
-      <button className='bg-blue-500 mx-5 p-2'  onClick={calculatePostCost}>Calculate Cost</button>
+      <button className='bg-blue-200 mx-5 p-2'  onClick={calculatePostCost}>Calculate Cost</button>
       </div>
        <button className={`${isValid ? "bg-blue-500 text-white hover:bg-blue-600 hover:text-white transition-all duration-300": ""} my-6 text-2xl text-gray-800 font-semibold border stroke-slate-400 shadow-lg py-1 px-3 rounded-md 
       `} type='submit' disabled={!isValid} >Submit</button>
