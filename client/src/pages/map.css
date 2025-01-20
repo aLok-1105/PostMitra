@@ -1,65 +1,96 @@
-body {
-  font-family: 'Roboto', sans-serif;
-  margin: 0;
-  padding: 0;
-  background-color: #e9ecef;
-  color: #495057;
-}
-
 .map-component {
   display: flex;
-  flex-wrap: wrap;
   height: 100vh;
-  padding: 20px;
+  padding: 10px;
   box-sizing: border-box;
-  gap: 20px;
 }
 
 .map-component-2 {
   flex: 1;
-  max-width: 400px;
-  background: #ffffff;
   padding: 20px;
-  border-radius: 12px;
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
+  background-color: #f4f4f4;
+  border-radius: 8px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin-right: 20px;
+  overflow-y: auto;
 }
 
 h2 {
-  margin: 0 0 20px;
-  font-size: 28px;
-  color: #007bff;
-  font-weight: bold;
+  font-size: 24px;
+  color: #333;
 }
 
 h3 {
+  font-size: 20px;
+  color: #333;
+}
+
+input[type="text"] {
+  width: 100%;
+  padding: 8px;
+  border-radius: 4px;
+  border: 1px solid #ccc;
+  font-size: 16px;
+  margin-bottom: 15px;
+}
+
+button {
+  width: 100%;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #007bff;
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+button:focus {
+  outline: none;
+}
+
+.results-container {
   margin-top: 20px;
-  font-size: 22px;
-  color: #343a40;
-  font-weight: 600;
+}
+
+.results-container div {
+  margin-bottom: 10px;
+}
+
+button.finalize-path {
+  margin-top: 5px;
+  padding: 5px 10px;
+  background-color: #28a745;
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.map-container {
+  flex: 2;
+  height: 100%;
+}
+
+.leaflet-container {
+  height: 100%;
+  width: 100%;
+}
+
+.results-container {
+  height: 200px;
+  overflow-y: auto;
+  background-color: #fff;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
 }
 
 label {
   display: block;
   margin-bottom: 10px;
-  font-weight: 600;
-  color: #495057;
 }
 
-input {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid #ced4da;
-  border-radius: 6px;
-  margin-bottom: 20px;
-  font-size: 16px;
-  background-color: #f8f9fa;
-  transition: border-color 0.3s;
-}
-
-input:focus {
+input[type="text"]:focus {
   border-color: #007bff;
-}
-.table-container {
-  margin:20px;
-  /* width: 100%; */
 }

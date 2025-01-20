@@ -20,6 +20,8 @@
     "mongoose": "^8.8.2",
     "moongoose": "^0.0.1",
     "nodemon": "^3.1.7",
-    "twilio": "^5.3.7"
+    "server": "file:",
+    "twilio": "^5.3.7",
+    "ws": "^8.18.0"
   }
 }

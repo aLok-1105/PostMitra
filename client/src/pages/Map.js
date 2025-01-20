@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { MapContainer, TileLayer, Marker, Popup, Polyline, Tooltip } from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import L, { Icon } from "leaflet";
 import { useLocation } from "react-router-dom";
@@ -22,11 +22,11 @@ const Map = () => {
     { geocode: [26.1445, 91.7362], popUp: "Guwahati" },
     { geocode: [17.6869, 83.2185], popUp: "Vizag" },
     { geocode: [23.0225, 72.5714], popUp: "Ahmedabad" },
-    { geocode: [23.2599, 77.4126], popUp: "Bhopal" },
-    { geocode: [17.3850, 78.4867], popUp: "Hyderabad" },
-    { geocode: [26.2389, 73.0243], popUp: "Jodhpur" },
+    { geocode: [23.1815, 75.7812], popUp: "Bhopal" },
+    { geocode: [17.3854, 78.4867], popUp: "Hyderabad" },
+    { geocode: [26.9196, 73.0334], popUp: "Jodhpur" },
     { geocode: [22.5726, 88.3639], popUp: "Kolkata" },
-    { geocode: [15.2993, 74.1240], popUp: "Panaji" },
+    { geocode: [15.4909, 73.8278], popUp: "Panaji" },
     { geocode: [19.2961, 84.7915], popUp: "Visakhapatnam" },
   ];
 
@@ -34,16 +34,6 @@ const Map = () => {
     iconUrl: "https://cdn-icons-png.flaticon.com/512/684/684908.png",
     iconSize: [25, 25],
   });
-
-  const sourceIcon = new Icon({
-    iconUrl: "https://cdn1.iconfinder.com/data/icons/social-messaging-ui-color/254000/66-512.png", // Blue icon
-    iconSize: [45, 45],
-  });
-  
-  const destinationIcon = new Icon({
-    iconUrl: "https://cdn1.iconfinder.com/data/icons/social-messaging-ui-color/254000/66-512.png", // Green icon
-    iconSize: [45, 45],
-  });
 
   const location = useLocation();
   const [source, setSource] = useState("");
@@ -92,10 +82,9 @@ const Map = () => {
     <div className='map-component'>
       <div className="map-component-2">
         <div>
-          <div> <h2>Route Planner</h2> </div>
-          
+          <h2>Route Planner</h2>
           <div style={{ marginBottom: "15px" }}>
-            <label htmlFor="source" style={{ display: "block", marginBottom: "10px" }}>
+            <label htmlFor="source" style={{ display: "block", marginBottom: "5px" }}>
               Source:
             </label>
             <input
@@ -161,34 +150,31 @@ const Map = () => {
             }}
           >
             {loading ? (
-  "Loading..."
-) : topPaths.length > 0 ? (
-  topPaths.map((pathObj, index) => (
-    <div key={index} style={{ marginBottom: "10px" }}>
-      <button
-        onClick={() => finalizePath(pathObj.path)}
-        style={{
-          marginTop: "5px",
-          padding: "5px 10px",
-          backgroundColor: "#28a745", // Dark green background
-          color: "#fff", // White text
-          border: "2px solid #1e7b34", // Solid dark green border
-          borderRadius: "4px",
-          cursor: "pointer",
-          textAlign: "center", // Ensures text inside button is left-aligned
-          display: "block", // Makes buttons block elements to ensure alignment
-        }}
-      >
-        {pathObj.path.join(" → ")}
-        <strong>Distance:</strong> {pathObj.distance} 
-      </button>
-      
-    </div>
-  ))
-) : (
-  "No paths found."
-)}
-
+              "Loading..."
+            ) : topPaths.length > 0 ? (
+              topPaths.map((pathObj, index) => (
+                <div key={index} style={{ marginBottom: "10px" }}>
+                  <strong>Path {index + 1}:</strong> {pathObj.path.join(" -> ")} <br />
+                  <strong>Distance:</strong> {pathObj.distance} 
+                  <button
+                    onClick={() => finalizePath(pathObj.path)}
+                    style={{
+                      marginTop: "5px",
+                      padding: "5px 10px",
+                      backgroundColor: "#28a745",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: "4px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    Finalize Path
+                  </button>
+                </div>
+              ))
+            ) : (
+              "No paths found."
+            )}
           </div>
         </div>
       </div>
@@ -204,22 +190,10 @@ const Map = () => {
             attribution='&copy; <a href="https://www.stadiamaps.com/" target="_blank">Stadia Maps</a> &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
           />
           {markers.map((marker, index) => (
-  <Marker
-    key={index}
-    position={marker.geocode}
-    icon={
-      marker.popUp === source
-        ? sourceIcon // Blue for Source
-        : marker.popUp === destination
-        ? destinationIcon // Green for Destination
-        : customIcon // Default for others
-    }
-  >
-    <Popup>{marker.popUp}</Popup>
-    <Tooltip>{marker.popUp}</Tooltip>
-  </Marker>
-))}
-
+            <Marker key={index} position={marker.geocode} icon={customIcon}>
+              <Popup>{marker.popUp}</Popup>
+            </Marker>
+          ))}
           {topPaths.map((pathObj, index) => (
             <Polyline
               key={index}
