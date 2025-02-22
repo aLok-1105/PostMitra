@@ -1,32 +1,14 @@
 const { WebSocketServer } = require("ws");
 const { createServer } = require("http");
 const { parse } = require("url");
-const { connect, Schema, model } = require("mongoose");
-const axios = require("axios");
-require("dotenv").config();
-const connectDB = require("./config/db");
-const Parcel = require("./models/Parcel");
-const Track = require("./models/Tracking");
-connectDB();
-const saveParcelToDatabase = require("./services/parcelServices");
-const deleteParcelByKeys = require("./services/parcelServices");
-const fetchParcelsByCurrentNode = require("./services/parcelServices");
-const fetchTracks = require("./services/trackingServices");
-const insertSingleTrack = require("./services/trackingServices");
-const updateParcelInDatabase = require("./services/parcelServices");
-const insertMultipleParcels = require("./services/parcelServices");
-const server = createServer();
-const wsServer = new WebSocketServer({ server });
-
-const port = 8080;
+const port = 8000;
 const connections = {};
 
-wsServer.on("connection", async (connection, request) => {
+const handleConnection = async (connection, req) => {
   const { username } = parse(request.url, true).query;
   //   const { username }  = req.url.split('username=')[1];
   console.log(`${username} connected`);
 
-  // Store the connection for each currentNode
   connections[username] = connection;
   try {
     const parcels = await fetchParcelsByCurrentNode(username);
@@ -42,7 +24,6 @@ wsServer.on("connection", async (connection, request) => {
     console.error("Error fetching parcels:", error);
   }
 
-  // Handle incoming messages
   connection.on("message", async (message) => {
     const parcel = JSON.parse(message);
     console.log(`Received message:`, parcel);
@@ -357,9 +338,6 @@ wsServer.on("connection", async (connection, request) => {
       delete connections[disconnectedNode];
     }
   });
-});
+};
 
-server.listen(port, () => {
-  console.log(`WebSocket server is running on port ${port}`);
-});
-
+module.exports = handleConnection;

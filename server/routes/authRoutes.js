@@ -20,10 +20,9 @@ router.post('/register', async (req, res) => {
       return res.status(400).send('Invalid role. Allowed roles: Operator, Officer');
     }
 
-    // console.log(req.body);
-
     const newUser = new User({ email, password, role });
     await newUser.save();
+
     res.status(201).send('User registered successfully');
   } catch (err) {
     res.status(400).send('Error: ' + err.message);
@@ -62,4 +61,4 @@ router.post('/login', async (req, res) => {
   }
 });
 
-module.exports = router;  // Ensure you export the router
+module.exports = router;
